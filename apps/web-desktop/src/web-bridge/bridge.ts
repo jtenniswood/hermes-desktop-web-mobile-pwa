@@ -64,6 +64,7 @@ declare global {
 }
 
 const TOKEN_STORAGE_KEY = 'hermes-web.session-token'
+const WEB_CONNECTION_ID = 'web-single'
 
 const noop = (): void => {}
 const unsubscribed = (): (() => void) => noop
@@ -509,7 +510,9 @@ function connection(profile?: string | null): HermesConnection {
 
   return {
     baseUrl: baseUrl(),
+    connectionId: WEB_CONNECTION_ID,
     mode: 'remote',
+    registryScoped: true,
     source: 'settings',
     // 'oauth' forces the renderer to re-resolve the WS URL through
     // getGatewayWsUrl on every reconnect, which cookie mode needs because
@@ -518,11 +521,23 @@ function connection(profile?: string | null): HermesConnection {
     token,
     wsUrl: token ? buildTokenWsUrl(token) : '',
     logs: [],
+    sharedRemote: true,
     isFullscreen: false,
     nativeOverlayWidth: 0,
     windowButtonPosition: null,
     ...(profile ? { profile } : {})
   }
+}
+
+/** Resolve any Bot Mode profile onto this browser's one shared gateway. */
+function connectionForProfile(connectionId?: null | string, profile?: null | string): HermesConnection {
+  const requestedId = (connectionId ?? '').trim()
+
+  if (requestedId && requestedId !== WEB_CONNECTION_ID) {
+    throw new Error(`Unknown web connection: ${requestedId}`)
+  }
+
+  return connection(profile)
 }
 
 async function toConnectionConfig(stored: StoredConnection): Promise<DesktopConnectionConfig> {
@@ -611,10 +626,11 @@ type WebBridge = Omit<Window['hermesDesktop'], 'terminal' | 'git' | 'zoom'>
 export function createWebBridge(): Window['hermesDesktop'] {
   const bridge: WebBridge = {
     getConnection: async profile => connection(profile),
+    getConnectionFor: async ({ connectionId, profile }) => connectionForProfile(connectionId, profile),
     // Single-gateway web: every profile is served by the live connection.
     getProfileRoutes: async profiles =>
       profiles.map(name => ({
-        connectionId: 'web-single',
+        connectionId: WEB_CONNECTION_ID,
         mode: 'remote',
         profile: name,
         targetProfile: name
@@ -641,6 +657,17 @@ export function createWebBridge(): Window['hermesDesktop'] {
       const ticket = await mintWsTicket(origin)
 
       return withGatewayRoute(`${wsBaseUrl()}/api/ws?ticket=${encodeURIComponent(ticket)}`, origin)
+    },
+    getGatewayWsUrlFor: async ({ connectionId }) => {
+      // Bot Mode routes profiles through the web-single registry source. It is
+      // still this same gateway, so mint the same fresh ticket used by the
+      // primary path rather than making the renderer fall back to its stale
+      // connection URL.
+      if (connectionId && connectionId !== WEB_CONNECTION_ID) {
+        throw new Error(`Unknown web connection: ${connectionId}`)
+      }
+
+      return bridge.getGatewayWsUrl()
     },
     openSessionWindow: async sessionId => {
       const opened = window.open(`${window.location.pathname}#/${sessionId}`, '_blank', 'noopener')
