@@ -7,14 +7,16 @@ name: docker-image
 # files + proxies to a gateway.
 #
 # Pull requests build the image without publishing it. Pushes to main, v* tags,
-# manual dispatches, and the daily build publish it to GHCR. The daily build
-# keeps the image tracking new upstream hermes-agent commits even with no local
-# repository changes.
+# manual dispatches, published GitHub Releases, and the daily build publish it
+# to GHCR. The daily build keeps the image tracking new upstream hermes-agent
+# commits even with no local repository changes.
 
 on:
   push:
     branches: [main]
     tags: ['v*']
+  release:
+    types: [published]
   pull_request: {}
   schedule:
     # Rebuild every day at 05:00 UTC to pick up the latest upstream hermes-agent.

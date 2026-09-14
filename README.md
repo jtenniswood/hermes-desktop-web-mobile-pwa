@@ -151,12 +151,12 @@ Build args:
 > hermes-mobile`), so the local deploy also tracks the latest upstream.
 
 Publishing: `.github/workflows/docker-build.yml` builds `linux/amd64` +
-`linux/arm64` and pushes `ghcr.io/<owner>/<repo>` on `main`, `v*` tags, manual
-runs, and the daily upstream refresh. The default branch publishes both
-`:latest` and `:main`; version tags also publish semver tags. Pull requests
-build and smoke-test an amd64 image without publishing it. The build context
-excludes `.env`, `node_modules`, `dist`, `apps/desktop`, and `apps/shared` via
-`.dockerignore`.
+`linux/arm64` and pushes `ghcr.io/<owner>/<repo>` on `main`, `v*` tags, published
+GitHub Releases, manual runs, and the daily upstream refresh. The default
+branch publishes both `:latest` and `:main`; releases also publish semver tags.
+Pull requests build and smoke-test an amd64 image without publishing it. The
+build context excludes `.env`, `node_modules`, `dist`, `apps/desktop`, and
+`apps/shared` via `.dockerignore`.
 
 ## Git model
 
