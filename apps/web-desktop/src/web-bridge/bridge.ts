@@ -56,6 +56,8 @@ declare global {
   interface Window {
     __HERMES_SESSION_TOKEN__?: string
     __HERMES_BASE_PATH__?: string
+    __HERMES_WEB_BRIDGE__?: boolean
+    __HERMES_WEB_ACTIVE_PROFILE__?: string
     /** Dev only: gateway origins the developer whitelisted as reachable, folded
      *  through the dev proxy (HERMES_GATEWAY_URL + config.json +
      *  HERMES_GATEWAY_WHITELIST; see vite.config.ts). */
@@ -522,6 +524,7 @@ function connection(profile?: string | null): HermesConnection {
     wsUrl: token ? buildTokenWsUrl(token) : '',
     logs: [],
     sharedRemote: true,
+    ...(profile ? { sharedPrimary: true } : {}),
     isFullscreen: false,
     nativeOverlayWidth: 0,
     windowButtonPosition: null,
@@ -624,6 +627,8 @@ async function webNotify(payload: HermesNotification): Promise<boolean> {
 type WebBridge = Omit<Window['hermesDesktop'], 'terminal' | 'git' | 'zoom'>
 
 export function createWebBridge(): Window['hermesDesktop'] {
+  window.__HERMES_WEB_BRIDGE__ = true
+
   const bridge: WebBridge = {
     getConnection: async profile => connection(profile),
     getConnectionFor: async ({ connectionId, profile }) => connectionForProfile(connectionId, profile),
