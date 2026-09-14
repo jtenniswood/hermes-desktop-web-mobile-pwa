@@ -161,6 +161,113 @@ const hermesPluginsAssets = () => {
   }
 }
 
+// Bot Mode can request the same canonical chat from both the row click and its
+// roster activity refresh. The renderer intentionally supersedes an older
+// session open, so let those same-bot requests share one promise instead of
+// turning the expected cancellation into a visible error. Different bots keep
+// the renderer's normal latest-selection cancellation behavior.
+const hermesBotOpenRaceFix = (): Plugin => ({
+  name: 'hermes:bot-open-race-fix',
+  transform(code, id) {
+    const normalizedId = id.replaceAll('\\', '/').split('?')[0]
+
+    if (normalizedId.endsWith('/apps/desktop/src/sdk/index.ts')) {
+      const retryableMarker = code.indexOf('const retryable')
+      const throwError = retryableMarker < 0 ? -1 : code.indexOf('throw error', retryableMarker)
+      const patched =
+        throwError < 0
+          ? code
+          : `${code.slice(0, throwError)}if (options.workspaceMode === 'bots' && error instanceof Error && error.message === 'Session open was superseded by a newer selection.') {\n              return\n            }\n            ${code.slice(throwError)}`
+
+      if (patched === code) {
+        throw new Error('Bot Mode cancellation override no longer matches the SDK source')
+      }
+
+      return { code: patched, map: null }
+    }
+
+    if (normalizedId.endsWith('/apps/desktop/src/plugins/hermes-bots/roster-actions.ts')) {
+      const withoutStaleFront = code.replace(/const fronted = focusExistingBotTab\(bot\)/, 'const fronted = null')
+      const notifyStart = withoutStaleFront.lastIndexOf('notifyBotOpenFailure(error, bot,')
+      const lineStart = notifyStart < 0 ? -1 : withoutStaleFront.lastIndexOf('\n', notifyStart) + 1
+      const patched =
+        lineStart < 0
+          ? withoutStaleFront
+          : `${withoutStaleFront.slice(0, lineStart)}      if (error instanceof Error && error.message === 'Session open was superseded by a newer selection.') {
+        return false
+      }
+
+${withoutStaleFront.slice(lineStart)}`
+
+      if (withoutStaleFront === code || patched === withoutStaleFront) {
+        throw new Error('Bot Mode roster cancellation guard no longer matches the renderer source')
+      }
+
+      return { code: patched, map: null }
+    }
+
+    if (!normalizedId.endsWith('/apps/desktop/src/plugins/hermes-bots/canonical-chat.ts')) {
+      return null
+    }
+
+    const start = code.indexOf('export async function openBotCanonicalChat(')
+    const end = code.indexOf('\nexport async function prepareBotSource', start)
+
+    if (start < 0 || end < 0) {
+      return null
+    }
+
+    const functionSource = code
+      .slice(start, end)
+      .replace('export async function openBotCanonicalChat(', 'async function openBotCanonicalChatImpl(')
+    const wrapper = `${functionSource}\n\nexport async function openBotCanonicalChat(owner, openingStillCurrent = null) {\n  const { key } = botOwner(owner)\n  const pending = canonicalChatOpens.get(key)\n\n  if (pending) {\n    return pending\n  }\n\n  const run = openBotCanonicalChatImpl(owner, null)\n  canonicalChatOpens.set(key, run)\n  const clear = () => {\n    if (canonicalChatOpens.get(key) === run) {\n      canonicalChatOpens.delete(key)\n    }\n  }\n  run.then(clear, clear)\n\n  return run\n}\n`
+    const transformed = `${code.slice(0, start)}const canonicalChatOpens = new Map()\n\n${wrapper}${code.slice(end)}`
+
+    const guarded = transformed.replace(
+      `  if (pending) {
+    return pending
+  }`,
+      `  if (pending) {
+    try {
+      return await pending
+    } catch (error) {
+      const current = typeof openingStillCurrent === 'function' && openingStillCurrent()
+      const superseded = /superseded by a newer selection/i.test(String(error?.message || error))
+
+      if (!current || !superseded) {
+        throw error
+      }
+    }
+  }`
+    )
+
+    const retried = guarded.replace(
+      `  const run = openBotCanonicalChatImpl(owner, null)
+  canonicalChatOpens.set(key, run)`,
+      `  const run = openBotCanonicalChatImpl(owner, null).catch(async error => {
+    const superseded = /superseded by a newer selection/i.test(String(error?.message || error))
+
+    if (!superseded) {
+      throw error
+    }
+
+    return openBotCanonicalChatImpl(owner, null)
+  })
+  canonicalChatOpens.set(key, run)`
+    )
+
+    if (retried === guarded) {
+      throw new Error('Bot Mode open-race guard no longer matches the generated wrapper')
+    }
+
+    if (retried === code) {
+      throw new Error('Bot Mode open-race override no longer matches the renderer source')
+    }
+
+    return { code: retried, map: null }
+  }
+})
+
 // --- Dynamic dev proxy (ported from hermes-ui, MIT) --------------------------
 const GATEWAY = process.env.HERMES_GATEWAY_URL ?? 'http://127.0.0.1:9119'
 
@@ -460,7 +567,8 @@ export default defineConfig(({ command, mode }) => {
       }
     }),
     emojibaseAssets(),
-    hermesPluginsAssets()
+    hermesPluginsAssets(),
+    hermesBotOpenRaceFix()
   ],
   css: {
     postcss: { plugins: [] }
