@@ -1,0 +1,47 @@
+name: typecheck-build
+
+# Build Hermes Web on GitHub so the VPS never runs a local build. Mirrors what
+# deploy.sh does (`nix build .#`) but only verifies compilation — it does NOT
+# deploy and does not touch the running site on :4174 (that serves from
+# ~/.hermes/desktop-web, outside this repo).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, X64, hermes-web, dev]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      # tsc is NOT run by the vite build, so run it explicitly (same dev shell
+      # the skill documents). pnpm install pulls the dependency closure; the
+      # fitler in flake.nix drops node_modules from the build source anyway.
+      - name: Typecheck (our code only)
+        run: |
+          nix develop -c pnpm install --frozen-lockfile
+          # tsc typechecks the WHOLE upstream renderer, which drifts with the
+          # always-latest hermes pin and reports upstream-only errors (implicit
+          # any, missing vitest, missing @hermes/shared/translucency) that do
+          # NOT block the vite build. Fail only on OUR files (apps/web-desktop/src).
+          set +e
+          nix develop -c pnpm --filter web-desktop run typecheck 2>&1 | tee /tmp/tsc.log
+          if grep -E '^src/' /tmp/tsc.log | grep -q 'error TS'; then
+            echo "::error::TypeScript errors in our code (apps/web-desktop/src):"
+            grep -E '^src/' /tmp/tsc.log | grep 'error TS'
+            exit 1
+          fi
+          echo "OK - no TypeScript errors in our code (upstream ../desktop, ../shared noise ignored)."
+          exit 0
+
+      # Production build is PROVEN by the docker-build workflow (primary image
+      # path: plain pnpm `vite build`). Don't duplicate it here — building the
+      # huge always-latest renderer under the CI nix sandbox is resource-fragile
+      # (rolldown OOM mid-transform). Just verify the flake still evaluates.
+      - name: Flake evaluates
+        run: nix --extra-experimental-features 'nix-command flakes' eval .#packages.x86_64-linux.default.drvPath --no-write-lock-file

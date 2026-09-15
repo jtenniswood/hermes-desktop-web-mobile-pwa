@@ -150,13 +150,12 @@ Build args:
 > automatically by the daily `hermes-flake-update` timer (`nix flake update
 > hermes-mobile`), so the local deploy also tracks the latest upstream.
 
-Publishing: `.github/workflows/nightly-docker-image.yml` builds
-`linux/amd64` + `linux/arm64` on GitHub Actions whenever a change is merged to
-`main`, and every night at 05:00 UTC. Main-branch builds publish the same image
-under `main` and `latest`, plus an immutable `release-<commit>` tag. Scheduled
-builds publish `nightly` plus a `nightly-<commit>` tag. The build context
-excludes `.env`, `node_modules`, `dist`, `apps/desktop`, and `apps/shared` via
-`.dockerignore`.
+Publishing: `.github/workflows/docker-build.yml` builds `linux/amd64` +
+`linux/arm64` on GitHub Actions and pushes `ghcr.io/<owner>/<repo>` whenever a
+change is merged to `main`. Each build gets an immutable `release-<commit>` tag,
+and the `main` and `latest` tags are updated for convenient deployment. `v*`
+tags also produce semver image tags. Build context is excluded of `.env`,
+`node_modules`, `dist`, `apps/desktop`, `apps/shared` via `.dockerignore`.
 
 ## Git model
 
