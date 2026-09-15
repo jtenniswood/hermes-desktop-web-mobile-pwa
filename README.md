@@ -151,9 +151,11 @@ Build args:
 > hermes-mobile`), so the local deploy also tracks the latest upstream.
 
 Publishing: `.github/workflows/docker-build.yml` builds `linux/amd64` +
-`linux/arm64` on GitHub Actions and pushes `ghcr.io/<owner>/<repo>` on `main`
-and `v*` tags. Build context is excluded of `.env`, `node_modules`, `dist`,
-`apps/desktop`, `apps/shared` via `.dockerignore`.
+`linux/arm64` on GitHub Actions and pushes `ghcr.io/<owner>/<repo>` whenever a
+change is merged to `main`. Each build gets an immutable `release-<commit>` tag,
+and the `main` and `latest` tags are updated for convenient deployment. `v*`
+tags also produce semver image tags. Build context is excluded of `.env`,
+`node_modules`, `dist`, `apps/desktop`, `apps/shared` via `.dockerignore`.
 
 ## Git model
 
