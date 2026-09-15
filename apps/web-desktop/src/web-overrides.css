@@ -18,6 +18,21 @@
    band. Give the tabs their own row so both controls and Sessions/Bots remain
    usable on mobile. */
 @media (max-width: 48rem) {
+  /* Mobile browser chrome changes the visible viewport while a legacy
+     100vh shell continues to occupy the larger layout viewport. Use the
+     dynamic viewport so the transcript and composer end above that chrome. */
+  html,
+  body,
+  #root,
+  [data-contrib-shell] {
+    height: 100dvh !important;
+    min-height: 0 !important;
+  }
+
+  [data-slot='composer-dock']:not([data-popped-out]) {
+    bottom: env(safe-area-inset-bottom) !important;
+  }
+
   [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-panel-header] {
     height: 62px !important;
   }
