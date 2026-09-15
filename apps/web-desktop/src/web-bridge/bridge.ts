@@ -710,6 +710,7 @@ async function fetchStatus(
   origin: string | null = null
 ): Promise<{ auth_providers?: string[]; auth_required?: boolean; version?: string } | null> {
   const res = await fetch(withGatewayRoute(`${base}/api/status`, origin), {
+    cache: 'no-store',
     credentials: 'same-origin',
     signal: AbortSignal.timeout(8_000)
   })
@@ -717,6 +718,36 @@ async function fetchStatus(
   if (!res.ok) {throw new Error(`${res.status}: ${res.statusText}`)}
 
   return (await res.json()) as { auth_providers?: string[]; auth_required?: boolean; version?: string }
+}
+
+const REMOTE_RESTART_TIMEOUT_MS = 45_000
+const REMOTE_RESTART_POLL_MS = 500
+
+/**
+ * The gateway restart endpoint hands the restart off to a detached process,
+ * so its successful response is not proof that the replacement is ready.
+ * Wait for the old process to disappear and the new gateway to answer before
+ * the settings page retries the request that exposed the code skew.
+ */
+async function waitForRemoteRestart(): Promise<void> {
+  const deadline = Date.now() + REMOTE_RESTART_TIMEOUT_MS
+  let unavailable = false
+
+  while (Date.now() < deadline) {
+    await new Promise<void>(resolve => window.setTimeout(resolve, REMOTE_RESTART_POLL_MS))
+
+    try {
+      await fetchStatus(baseUrl(), activeUpstreamOrigin())
+
+      if (unavailable) {
+        return
+      }
+    } catch {
+      unavailable = true
+    }
+  }
+
+  throw new Error('Timed out waiting for the gateway to restart')
 }
 
 function readyBootProgress(): DesktopBootProgress {
@@ -910,6 +941,20 @@ export function createWebBridge(): Window['hermesDesktop'] {
       onControl: unsubscribed
     },
     getBootProgress: async () => readyBootProgress(),
+    // The browser has no Desktop-owned child process to recycle. Ask the
+    // connected gateway to restart itself, then wait for the replacement so
+    // ModelSettings does not immediately retry against the stale process.
+    recycleBackend: async profile => {
+      await apiFetch<{ ok: boolean }>({
+        method: 'POST',
+        path: '/api/gateway/restart',
+        profile: profile ?? undefined,
+        timeoutMs: 10_000
+      })
+      await waitForRemoteRestart()
+
+      return { ok: true }
+    },
     getConnectionConfig: async () => toConnectionConfig(loadStoredConnection()),
     saveConnectionConfig: async input => toConnectionConfig(persistConnection(input)),
     applyConnectionConfig: async input => {
