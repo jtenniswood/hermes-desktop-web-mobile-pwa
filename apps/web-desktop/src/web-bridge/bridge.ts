@@ -66,8 +66,10 @@ declare global {
 const TOKEN_STORAGE_KEY = 'hermes-web.session-token'
 
 const WEB_ZOOM_STORAGE_KEY = 'hermes-web.ui-scale'
+const MOBILE_WEB_ZOOM_STORAGE_KEY = 'hermes-web.ui-scale.mobile'
 const ZOOM_FACTOR_BASE = 1.2
-const DEFAULT_ZOOM_LEVEL = Math.log(0.9) / Math.log(ZOOM_FACTOR_BASE)
+const DESKTOP_DEFAULT_ZOOM_LEVEL = Math.log(0.9) / Math.log(ZOOM_FACTOR_BASE)
+const MOBILE_DEFAULT_ZOOM_LEVEL = Math.log(1.25) / Math.log(ZOOM_FACTOR_BASE)
 const MIN_ZOOM_LEVEL = -9
 const MAX_ZOOM_LEVEL = 9
 const ZOOM_STEP = 0.1
@@ -76,15 +78,29 @@ type WebZoomChange = { level: number; percent: number }
 
 function clampZoomLevel(level: number): number {
   if (!Number.isFinite(level)) {
-    return DEFAULT_ZOOM_LEVEL
+    return defaultZoomLevel()
   }
 
   return Math.min(Math.max(level, MIN_ZOOM_LEVEL), MAX_ZOOM_LEVEL)
 }
 
+function isMobileDevice(): boolean {
+  return typeof window !== 'undefined' &&
+    window.matchMedia('(pointer: coarse)').matches &&
+    window.matchMedia('(max-width: 64rem)').matches
+}
+
+function defaultZoomLevel(): number {
+  return isMobileDevice() ? MOBILE_DEFAULT_ZOOM_LEVEL : DESKTOP_DEFAULT_ZOOM_LEVEL
+}
+
+function zoomStorageKey(): string {
+  return isMobileDevice() ? MOBILE_WEB_ZOOM_STORAGE_KEY : WEB_ZOOM_STORAGE_KEY
+}
+
 function percentToZoomLevel(percent: number): number {
   if (!Number.isFinite(percent) || percent <= 0) {
-    return DEFAULT_ZOOM_LEVEL
+    return defaultZoomLevel()
   }
 
   return clampZoomLevel(Math.log(percent / 100) / Math.log(ZOOM_FACTOR_BASE))
@@ -96,11 +112,11 @@ function zoomLevelToPercent(level: number): number {
 
 function readStoredZoomPercent(): number {
   try {
-    const stored = Number(window.localStorage.getItem(WEB_ZOOM_STORAGE_KEY))
+    const stored = Number(window.localStorage.getItem(zoomStorageKey()))
 
-    return Number.isFinite(stored) && stored > 0 ? stored : zoomLevelToPercent(DEFAULT_ZOOM_LEVEL)
+    return Number.isFinite(stored) && stored > 0 ? stored : zoomLevelToPercent(defaultZoomLevel())
   } catch {
-    return zoomLevelToPercent(DEFAULT_ZOOM_LEVEL)
+    return zoomLevelToPercent(defaultZoomLevel())
   }
 }
 
@@ -128,7 +144,7 @@ function createWebZoomBridge(): NonNullable<Window['hermesDesktop']['zoom']> {
 
     if (persist) {
       try {
-        window.localStorage.setItem(WEB_ZOOM_STORAGE_KEY, String(change.percent))
+        window.localStorage.setItem(zoomStorageKey(), String(change.percent))
       } catch {
         // Private browsing or a blocked storage area should not disable zoom.
       }
@@ -147,7 +163,7 @@ function createWebZoomBridge(): NonNullable<Window['hermesDesktop']['zoom']> {
     const key = event.key
     if (key === '0') {
       event.preventDefault()
-      apply(DEFAULT_ZOOM_LEVEL, true)
+      apply(defaultZoomLevel(), true)
     } else if (key === '+' || key === '=' || event.code === 'Equal') {
       event.preventDefault()
       apply(level + ZOOM_STEP, true)
