@@ -1,14 +1,17 @@
-name: nightly-docker-image
+name: docker-image
 
-# Build the Docker image from this repository every night and publish it to
-# this repository's GitHub Container Registry namespace. The Dockerfile is the
-# source of truth for the image; no workflow or build output is imported from a
-# different repository.
+# Build the Docker image from this repository on merges to main and every night,
+# publishing it to this repository's GitHub Container Registry namespace. The
+# Dockerfile is the source of truth for the image; no workflow or build output
+# is imported from a different repository.
 
 on:
+  push:
+    branches: [main]
   schedule:
     # GitHub Actions cron schedules use UTC. Run every night at 05:00 UTC.
     - cron: '0 5 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -45,8 +48,11 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=nightly
-            type=sha
+            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=raw,value=nightly,enable=${{ github.event_name == 'schedule' }}
+            type=sha,prefix=release-,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=sha,prefix=nightly-,enable=${{ github.event_name == 'schedule' }}
 
       - name: Build and publish Docker image
         uses: docker/build-push-action@v6

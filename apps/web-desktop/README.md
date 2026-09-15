@@ -87,6 +87,12 @@ serves is decided solely by `HERMES_WEB_DIST`.)
 
 ## Known limitations (stubs in the bridge)
 
+Browser notifications use the standard Notification API while the page is
+visible and the PWA service worker when the page is backgrounded. They require
+browser permission and the HTTPS deployment (or localhost); this is not a
+server push subscription, so notifications cannot be delivered after the app
+has never been opened or while the gateway has no active browser session.
+
 Local terminal, native git ops, pet overlay, quick-entry hotkey, auto-update,
 marketplace themes, local file dialogs, OAuth-in-keychain, SSH config. The
 renderer's consumers probe for these and self-disable, so the chat experience

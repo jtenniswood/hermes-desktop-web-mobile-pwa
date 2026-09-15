@@ -84,6 +84,13 @@ docker logs -f hermes-web
 docker stop hermes-web
 ```
 
+The GitHub Actions workflow also publishes multi-architecture images to
+`ghcr.io/<owner>/<repo>` when changes are merged to `main`. Each build gets an
+immutable `release-<commit>` tag, while the `main` and `latest` tags are
+updated for convenient deployment. `v*` tags also produce semver image tags.
+The build context excludes `.env`, `node_modules`, `dist`, `apps/desktop`, and
+`apps/shared` via `.dockerignore`.
+
 To start the same container again after stopping it, use `docker start
 hermes-web`.
 
