@@ -18,9 +18,9 @@ the pinned `hermes-agent` at build time.
   sources fetched at build time (read‑only in the nix store). Change rendering
   only through our files: `apps/web-desktop/src/`, `src/web-bridge/`,
   `src/overrides/`, `vite.config.ts`, `web.css`.
-- **Never force‑push / rewrite history.** `main` is shared across three remotes
-  (Gitea `origin`, GitHub mirror `github`, GitHub public `public`). Only move it
-  with fast‑forward pushes, and keep all three in sync.
+- **Never force‑push / rewrite history.** `origin` is the GitHub repository for
+  this project. Keep `main` and feature branches on that repository, and open
+  all pull requests there.
 - **Never commit secrets or VPS‑identifying data.** `.env` is gitignored and
   stays local; `.env.example` holds placeholders only; `PLAN.md` is gitignored
   (internal); do not add LAN IPs, tailnet hostnames or `/home/ubuntu` paths to
@@ -31,17 +31,13 @@ the pinned `hermes-agent` at build time.
 
 ## Remotes & push discipline
 
-- `origin` — Gitea (`http://localhost:3000/mdgqc/hermes-mobile`) — **primary**,
-  upstream of `main` is `origin/main`.
-- `github` — GitHub private mirror (`mdg-qc/hermes-mobile`).
-- `public` — GitHub public repo (`mdg-qc/hermes-desktop-web-mobile-pwa`).
+- `origin` — GitHub (`https://github.com/jtenniswood/hermes-desktop-web-mobile-pwa.git`) — **primary** and the target for all pull requests.
+- The upstream of `main` is `origin/main`.
 
 After every meaningful commit:
 ```bash
-git push origin main && git push github main && git push public main
+git push origin <branch>
 ```
-Push the mirror and public the same way — but never before origin (origin stays
-authoritative).
 
 ## Build & dev
 
