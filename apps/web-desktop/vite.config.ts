@@ -501,6 +501,10 @@ export default defineConfig(({ command, mode }) => {
     preserveSymlinks: true,
     alias: [
       { find: '@/debug/dev-only', replacement: debugEntry(command, process.env as Record<string, string>) },
+      {
+        find: '@/store/titlebar-app-actions',
+        replacement: path.resolve(__dirname, 'src/overrides/titlebar-app-actions.ts')
+      },
       { find: '@hermes/plugin-sdk', replacement: path.resolve(__dirname, '../desktop/src/sdk/index.ts') },
       { find: '@hermes/shared/billing', replacement: path.resolve(__dirname, '../shared/src/billing-types.ts') },
       { find: '@hermes/shared', replacement: path.resolve(__dirname, '../shared/src') },

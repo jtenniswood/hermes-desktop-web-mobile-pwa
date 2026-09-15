@@ -7,6 +7,7 @@ import './web-bridge/install'
 // Our Tailwind v4 entry: scans apps/desktop/src for utility class names and
 // imports the upstream stylesheet (see web.css for why this is needed).
 import './web.css'
+import './web-overrides.css'
 
 // PWA: register the service worker (no-op off HTTPS / in dev).
 import { registerPwa } from './pwa/register'
