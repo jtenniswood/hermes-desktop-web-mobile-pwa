@@ -458,6 +458,9 @@ export default defineConfig(({ command, mode }) => {
         ]
       },
       workbox: {
+        // Add click/focus handling to service-worker notifications while
+        // keeping the normal generated Workbox precache behavior.
+        importScripts: ['notifications-sw.js'],
         // Precache the whole app shell; the largest chunk (shiki) is ~19 MB,
         // so keep the per-file cap generous.
         globPatterns: ['**/*.{js,css,html,woff,woff2,ttf,otf,eot,png,jpg,jpeg,svg,gif,webp,ico}'],
