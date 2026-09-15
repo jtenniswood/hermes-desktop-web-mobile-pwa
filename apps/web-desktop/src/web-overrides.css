@@ -59,6 +59,27 @@
     margin-block: 0.5rem;
   }
 
+  /* Boot-recovery's connection editor uses the same full-screen pattern, but
+     its card is a glass-opaque surface rather than `bg-card`. Keep the card
+     inside the dynamic viewport and give its SettingsContent child a real
+     bounded height; otherwise `h-full` resolves against the oversized card
+     and the inner scroll area grows instead of scrolling. */
+  [data-glass-opaque].fixed.inset-0:has(> div > .min-h-0.flex-1) {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    padding-block: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-bottom)) !important;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-glass-opaque].fixed.inset-0:has(> div > .min-h-0.flex-1) > div {
+    flex: 0 0 auto;
+    height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: none !important;
+  }
+
   [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-panel-header] {
     height: 62px !important;
   }
