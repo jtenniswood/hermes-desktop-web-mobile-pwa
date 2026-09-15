@@ -162,7 +162,7 @@ const hermesPluginsAssets = () => {
 }
 
 // --- Dynamic dev proxy (ported from hermes-ui, MIT) --------------------------
-const GATEWAY = process.env.HERMES_GATEWAY_URL ?? 'http://127.0.0.1:9119'
+let GATEWAY = process.env.HERMES_GATEWAY_URL ?? 'http://127.0.0.1:9119'
 
 // Optional repo-root config.json (git-ignored) whose `gateways` array whitelists
 // additional gateway URLs for the dev proxy.
@@ -200,29 +200,35 @@ function envGatewayUrls(): string[] {
 
 const LOCAL_CONFIG = readLocalConfig()
 
-const TARGETS = new Map<string, string>()
+let TARGETS = new Map<string, string>()
+let GATEWAY_WHITELIST: string[] = []
+let DEFAULT_TARGET = 'http://127.0.0.1:9119'
 
-for (const url of [GATEWAY, ...configGatewayUrls(LOCAL_CONFIG), ...envGatewayUrls()]) {
+function configureGateway(gateway: string | undefined, extraGateways: string[] = []): void {
+  GATEWAY = gateway ?? 'http://127.0.0.1:9119'
+  TARGETS = new Map<string, string>()
+
+  for (const url of [GATEWAY, ...configGatewayUrls(LOCAL_CONFIG), ...envGatewayUrls(), ...extraGateways]) {
+    try {
+      const origin = new URL(url).origin
+
+      if (!TARGETS.has(origin)) {TARGETS.set(origin, url)}
+    } catch {
+      // skip non-absolute / unparseable entries
+    }
+  }
+
+  GATEWAY_WHITELIST = [...TARGETS.keys()]
+
   try {
-    const origin = new URL(url).origin
-
-    if (!TARGETS.has(origin)) {TARGETS.set(origin, url)}
+    new URL(GATEWAY)
+    DEFAULT_TARGET = GATEWAY
   } catch {
-    // skip non-absolute / unparseable entries
+    DEFAULT_TARGET = 'http://127.0.0.1:9119'
   }
 }
 
-const GATEWAY_WHITELIST = [...TARGETS.keys()]
-
-const DEFAULT_TARGET = (() => {
-  try {
-    new URL(GATEWAY)
-
-    return GATEWAY
-  } catch {
-    return 'http://127.0.0.1:9119'
-  }
-})()
+configureGateway(GATEWAY)
 
 const PROXY_PREFIXES = ['/api', '/auth', '/login']
 const ROUTE_COOKIE = 'hermes_dev_gateway'
@@ -413,6 +419,13 @@ export default defineConfig(({ command, mode }) => {
   // Extra hostnames allowed past Vite's Host check, from apps/web-desktop/.env
   // (WEB_ALLOWED_HOSTS, comma-separated) — e.g. Tailscale names, LAN hostnames.
   const env = loadEnv(mode, __dirname, '')
+  configureGateway(
+    process.env.HERMES_GATEWAY_URL ?? env.HERMES_GATEWAY_URL,
+    (process.env.HERMES_GATEWAY_WHITELIST ?? env.HERMES_GATEWAY_WHITELIST ?? '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+  )
   const envAllowedHosts = (env.WEB_ALLOWED_HOSTS ?? '')
     .split(',')
     .map(s => s.trim())
