@@ -10,6 +10,29 @@
  */
 import { createWebBridge } from './bridge'
 
+// The desktop renderer supplies its own contextual menus. Without this guard,
+// the browser also opens its native page menu for the same right-click, which
+// leaves two menus visible at once in the web wrapper. Capture the event so
+// the guard runs before renderer handlers, but do not stop propagation: the
+// renderer still needs the event to open its custom menu.
+if (typeof window !== 'undefined') {
+  window.addEventListener('contextmenu', event => {
+    event.preventDefault()
+  }, true)
+}
+
+// HUD is an Electron window mode. The browser wrapper has no separate native
+// window for it, so treat stale/bookmarked HUD URLs as the normal app before
+// the upstream renderer reads `window.location.search` during module startup.
+if (typeof window !== 'undefined') {
+  const url = new URL(window.location.href)
+
+  if (url.searchParams.get('win') === 'hud') {
+    url.searchParams.delete('win')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+  }
+}
+
 if (typeof window !== 'undefined' && !window.hermesDesktop) {
   window.hermesDesktop = createWebBridge()
 }
