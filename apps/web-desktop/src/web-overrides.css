@@ -33,6 +33,14 @@
     bottom: env(safe-area-inset-bottom) !important;
   }
 
+  /* The renderer positions both fixed control clusters from the same titlebar
+     token. On narrow layouts that token can fall into the tab row, so keep
+     the controls in the first row explicitly. */
+  [data-titlebar-cluster='left'],
+  [data-titlebar-cluster='right'] {
+    top: 0 !important;
+  }
+
   [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-panel-header] {
     height: 62px !important;
   }
