@@ -65,6 +65,119 @@ declare global {
 
 const TOKEN_STORAGE_KEY = 'hermes-web.session-token'
 
+const WEB_ZOOM_STORAGE_KEY = 'hermes-web.ui-scale'
+const ZOOM_FACTOR_BASE = 1.2
+const DEFAULT_ZOOM_LEVEL = Math.log(0.9) / Math.log(ZOOM_FACTOR_BASE)
+const MIN_ZOOM_LEVEL = -9
+const MAX_ZOOM_LEVEL = 9
+const ZOOM_STEP = 0.1
+
+type WebZoomChange = { level: number; percent: number }
+
+function clampZoomLevel(level: number): number {
+  if (!Number.isFinite(level)) {
+    return DEFAULT_ZOOM_LEVEL
+  }
+
+  return Math.min(Math.max(level, MIN_ZOOM_LEVEL), MAX_ZOOM_LEVEL)
+}
+
+function percentToZoomLevel(percent: number): number {
+  if (!Number.isFinite(percent) || percent <= 0) {
+    return DEFAULT_ZOOM_LEVEL
+  }
+
+  return clampZoomLevel(Math.log(percent / 100) / Math.log(ZOOM_FACTOR_BASE))
+}
+
+function zoomLevelToPercent(level: number): number {
+  return Math.round(Math.pow(ZOOM_FACTOR_BASE, clampZoomLevel(level)) * 100)
+}
+
+function readStoredZoomPercent(): number {
+  try {
+    const stored = Number(window.localStorage.getItem(WEB_ZOOM_STORAGE_KEY))
+
+    return Number.isFinite(stored) && stored > 0 ? stored : zoomLevelToPercent(DEFAULT_ZOOM_LEVEL)
+  } catch {
+    return zoomLevelToPercent(DEFAULT_ZOOM_LEVEL)
+  }
+}
+
+function isEditableZoomTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement &&
+    (target.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName))
+}
+
+/** Browser equivalent of Electron's global window zoom bridge. */
+function createWebZoomBridge(): NonNullable<Window['hermesDesktop']['zoom']> {
+  let level = percentToZoomLevel(readStoredZoomPercent())
+  const listeners = new Set<(change: WebZoomChange) => void>()
+
+  const current = (): WebZoomChange => ({ level, percent: zoomLevelToPercent(level) })
+
+  const apply = (nextLevel: number, persist: boolean): void => {
+    level = clampZoomLevel(nextLevel)
+    const change = current()
+
+    // CSS zoom is supported by the Chromium browsers used by the web app and
+    // scales layout, text, controls, and icons together like Electron's
+    // webContents.setZoomLevel(). Apply it before the renderer mounts to avoid
+    // a visible jump on startup.
+    document.documentElement.style.setProperty('zoom', String(change.percent / 100))
+
+    if (persist) {
+      try {
+        window.localStorage.setItem(WEB_ZOOM_STORAGE_KEY, String(change.percent))
+      } catch {
+        // Private browsing or a blocked storage area should not disable zoom.
+      }
+    }
+
+    for (const listener of listeners) {
+      listener(change)
+    }
+  }
+
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (!(event.metaKey || event.ctrlKey) || event.altKey || isEditableZoomTarget(event.target)) {
+      return
+    }
+
+    const key = event.key
+    if (key === '0') {
+      event.preventDefault()
+      apply(DEFAULT_ZOOM_LEVEL, true)
+    } else if (key === '+' || key === '=' || event.code === 'Equal') {
+      event.preventDefault()
+      apply(level + ZOOM_STEP, true)
+    } else if (key === '-' || key === '_' || event.code === 'Minus') {
+      event.preventDefault()
+      apply(level - ZOOM_STEP, true)
+    } else {
+      return
+    }
+
+    event.stopPropagation()
+  }
+
+  // Capture the shortcut before the renderer can treat it as a composer or
+  // browser-page command. Inputs and text editors are intentionally excluded.
+  window.addEventListener('keydown', onKeyDown, true)
+  apply(level, false)
+
+  return {
+    get: async () => current(),
+    factor: () => current().percent / 100,
+    setPercent: (percent: number) => apply(percentToZoomLevel(percent), true),
+    onChanged: (callback: (change: WebZoomChange) => void) => {
+      listeners.add(callback)
+
+      return () => listeners.delete(callback)
+    }
+  }
+}
+
 const noop = (): void => {}
 const unsubscribed = (): (() => void) => noop
 
@@ -601,15 +714,16 @@ async function webNotify(payload: HermesNotification): Promise<boolean> {
 }
 
 /**
- * Everything the web build supports. `terminal`, `git` and `zoom` are
+ * Everything the web build supports. `terminal` and `git` are
  * intentionally absent: their consumers probe for bridge presence and
  * self-disable (terminal), or never reach the native path in remote mode
- * (git), or render nothing (zoom).
+ * (git). The browser provides its own zoom implementation below.
  */
-type WebBridge = Omit<Window['hermesDesktop'], 'terminal' | 'git' | 'zoom'>
+type WebBridge = Omit<Window['hermesDesktop'], 'terminal' | 'git'>
 
 export function createWebBridge(): Window['hermesDesktop'] {
   const bridge: WebBridge = {
+    zoom: createWebZoomBridge(),
     getConnection: async profile => connection(profile),
     // Single-gateway web: every profile is served by the live connection.
     getProfileRoutes: async profiles =>
