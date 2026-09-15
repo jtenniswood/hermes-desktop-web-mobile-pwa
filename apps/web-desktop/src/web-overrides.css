@@ -12,12 +12,12 @@
   display: none;
 }
 
-/* On narrow browser viewports the fixed app controls share the top edge with
-   the layout-tree tabs. The upstream titlebar measurement reserves horizontal
-   space for those controls, but the tab strip can still occupy their vertical
-   band. Give the tabs their own row so both controls and Sessions/Bots remain
-   usable on mobile. */
-@media (max-width: 48rem) {
+/* On touch-sized browser viewports the fixed app controls share the top edge
+   with the layout-tree tabs. Width alone is not enough here: a normal desktop
+   window on a high-density display can be fewer than 48rem in CSS pixels. The
+   touch-pointer check keeps the mobile row from creating unused desktop space
+   while still allowing the shell to use the full dynamic viewport on phones. */
+@media (max-width: 48rem) and (pointer: coarse) {
   /* Mobile browser chrome changes the visible viewport while a legacy
      100vh shell continues to occupy the larger layout viewport. Use the
      dynamic viewport so the transcript and composer end above that chrome. */
