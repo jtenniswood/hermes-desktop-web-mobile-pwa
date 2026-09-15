@@ -11,3 +11,22 @@
 [data-slot='alert']:has(> .codicon-gift) {
   display: none;
 }
+
+/* On narrow browser viewports the fixed app controls share the top edge with
+   the layout-tree tabs. The upstream titlebar measurement reserves horizontal
+   space for those controls, but the tab strip can still occupy their vertical
+   band. Give the tabs their own row so both controls and Sessions/Bots remain
+   usable on mobile. */
+@media (max-width: 48rem) {
+  [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-panel-header] {
+    height: 62px !important;
+  }
+
+  [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-zone-tabstrip] {
+    bottom: auto !important;
+    height: 28px;
+    inset-inline: 0;
+    position: absolute;
+    top: 34px;
+  }
+}
