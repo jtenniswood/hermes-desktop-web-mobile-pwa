@@ -1,0 +1,6 @@
+/* HUD is an Electron-only floating window. Keep the upstream renderer intact,
+   but remove its titlebar entry from the browser wrapper. The icon selector is
+   stable across translated labels and scoped to titlebar tool clusters. */
+[data-titlebar-cluster] button:has(> .codicon-comment-discussion) {
+  display: none;
+}

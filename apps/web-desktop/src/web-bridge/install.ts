@@ -10,6 +10,18 @@
  */
 import { createWebBridge } from './bridge'
 
+// HUD is an Electron window mode. The browser wrapper has no separate native
+// window for it, so treat stale/bookmarked HUD URLs as the normal app before
+// the upstream renderer reads `window.location.search` during module startup.
+if (typeof window !== 'undefined') {
+  const url = new URL(window.location.href)
+
+  if (url.searchParams.get('win') === 'hud') {
+    url.searchParams.delete('win')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+  }
+}
+
 if (typeof window !== 'undefined' && !window.hermesDesktop) {
   window.hermesDesktop = createWebBridge()
 }

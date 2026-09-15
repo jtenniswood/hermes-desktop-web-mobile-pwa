@@ -695,36 +695,6 @@ export function createWebBridge(): Window['hermesDesktop'] {
       onState: unsubscribed,
       onControl: unsubscribed
     },
-    // HUD mode (mini chat): the renderer natively treats a ?win=hud URL as the
-    // slim floating chat (isHudWindow -> HudShell + $hudMode). There is no
-    // second OS window in a browser, so open/close navigate to/from that view
-    // in-place; the rest of the API is a no-op (no window controls in web).
-    hud: {
-      nativeDrag: true,
-      open: async request => {
-        const hash = request?.sessionId ? `#/${encodeURIComponent(request.sessionId)}` : ''
-        window.location.href = `${window.location.pathname}?win=hud${hash}`
-
-        return { ok: true }
-      },
-      close: async () => {
-        window.location.href = window.location.pathname
-
-        return { ok: true }
-      },
-      setIgnoreMouse: noop,
-      beginMove: noop,
-      endMove: noop,
-      moveBy: noop,
-      setBounds: noop,
-      resetLayout: async () => ({ ok: true }),
-      setFrost: async () => ({ ok: true }),
-      setSession: noop,
-      onGoto: unsubscribed,
-      onChanged: unsubscribed,
-      onCursor: unsubscribed,
-      onGameOverlay: unsubscribed
-    },
     getBootProgress: async () => readyBootProgress(),
     getConnectionConfig: async () => toConnectionConfig(loadStoredConnection()),
     saveConnectionConfig: async input => toConnectionConfig(persistConnection(input)),
