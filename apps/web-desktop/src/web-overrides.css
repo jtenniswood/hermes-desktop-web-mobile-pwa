@@ -41,6 +41,24 @@
     top: 0 !important;
   }
 
+  /* Setup overlays contain forms that are taller than a phone viewport. The
+     desktop-centred fixed card otherwise extends below the clipped app shell,
+     leaving the lower connection options unreachable. */
+  .fixed.inset-0:has(> div.bg-card) {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    padding-block: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-bottom)) !important;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fixed.inset-0:has(> div.bg-card) > div {
+    flex: 0 0 auto;
+    margin-block: 0.5rem;
+  }
+
   [data-tree-group][data-window-top]:has([data-zone-tabstrip]) [data-panel-header] {
     height: 62px !important;
   }
