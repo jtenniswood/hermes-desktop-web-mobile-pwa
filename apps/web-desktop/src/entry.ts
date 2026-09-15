@@ -8,6 +8,7 @@ import './web-bridge/install'
 // imports the upstream stylesheet (see web.css for why this is needed).
 import './web.css'
 import './web-overrides.css'
+import './web-sidebar-collapse'
 
 // PWA: register the service worker (no-op off HTTPS / in dev).
 import { registerPwa } from './pwa/register'
