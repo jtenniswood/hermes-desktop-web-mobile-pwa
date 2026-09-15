@@ -26,7 +26,7 @@ the pinned `hermes-agent` at build time.
   (internal); do not add LAN IPs, tailnet hostnames or `/home/ubuntu` paths to
   tracked files.
 - **The VPS never builds nix locally** (house rule) — real builds run on GitHub
-  Actions (`typecheck-build.yml`, `docker-build.yml`). `nix eval` / `nix flake
+  Action (`nightly-docker-image.yml`). `nix eval` / `nix flake
   show` locally is fine.
 
 ## Remotes & push discipline
