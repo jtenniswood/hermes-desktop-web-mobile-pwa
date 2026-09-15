@@ -1,196 +1,103 @@
-> ⚠️ **Unofficial** — not affiliated with, endorsed by, or a part of the official
-> `NousResearch/hermes-agent` repository. **The code is AI‑generated** (by the
-> Hermes agent on DeepSeek V4 Flash) and reviewed **only by AI** — use at your
-> own risk.
+# Hermes Web
 
-# Hermes Desktop — Web / Mobile (PWA) Version
+Hermes Desktop’s chat UI as a web app and installable PWA, with a Docker image
+for self-hosting. The renderer is fetched from
+[`NousResearch/hermes-agent`](https://github.com/NousResearch/hermes-agent) at
+build time.
 
-The Hermes Desktop chat UI, repackaged as a web app and installable PWA, plus a
-Docker image. At build time the renderer is pulled from the latest
-`hermes-agent`.
+> This is an unofficial, AI-generated project. It is intended for private
+> networks such as Tailscale and is not hardened for the public internet.
 
-## Provenance & intended use
+## Repository
 
-- **AI‑generated.** Every line in this repo was written by the Hermes agent
-  (running on DeepSeek V4 Flash) and reviewed only by that same AI. No human
-  has looked at the code.
-- **Private network only.** Built for Tailscale / tailnet. It has not been
-  hardened for public HTTPS, so don't put it on the open internet as is.
-- **Personal use.** The current state is enough for private, self‑hosted use.
+- `apps/web-desktop/` — web app, bridge, styles, and overrides
+- `flake.nix` — Nix development and production build
+- `Dockerfile` — Nix-free frontend image using nginx
+- `apps/web-desktop/.env.example` — local and Docker configuration template
 
-The repo holds only the web code (`apps/web-desktop`) plus a nix flake. The
-hermes-agent renderer is fetched by nix from `flake.lock` at build/dev time:
-no clone, no `git pull`, and updating upstream is one command.
+The upstream renderer is supplied by the Nix flake or fetched by Docker. Do
+not add or edit `apps/desktop/` or `apps/shared/`; those directories contain
+upstream renderer sources.
 
-## Structure
-
-```
-flake.nix              build ONLY the web UI (hermes-agent = flake=false input)
-pnpm-workspace.yaml    pnpm 11 workspace (only apps/web-desktop)
-pnpm-lock.yaml         web dependency closure lockfile
-package.json           root convenience scripts (pnpm-based)
-.env / .env.example    HERMES_WEB_URL + WEB_ALLOWED_HOSTS
-apps/web-desktop/      all our web code (entry, bridge, vite config, css…)
-apps/web-desktop/scripts/deploy.sh   build → copy to ~/.hermes/desktop-web → health-check
-```
-
-## Quick start (dev)
+## Development
 
 ```bash
-nix develop                       # node+pnpm; symlinks renderer sources from the input
-pnpm install                      # web closure only (no electron!)
-pnpm --filter web-desktop run dev # http://<host>:5174/ (HMR)
+nix develop
+pnpm install
+pnpm dev
 ```
 
-## Build & deploy
+Open <http://localhost:5174/>. Run the focused type check with:
 
 ```bash
-nix build .#                      # → result/ = the web dist, nothing else
-apps/web-desktop/scripts/deploy.sh  # nix build → copy → health-check
+pnpm typecheck
 ```
 
-The deploy **manages no processes**: the nix-managed hermes dashboard serves
-the dist via `HERMES_WEB_DIST` — configured **once** in the nix service to
-`~/.hermes/desktop-web` (deploy's default target). After a deploy the dashboard
-serves the new files immediately (static files, same path).
+## Build and deploy
 
-**Updating upstream:** `nix flake update hermes` (pins a new commit; rebuild
-after). No repo management.
+Build the web files with Nix:
 
-## .env
+```bash
+nix build .#
+```
+
+To build, copy, and health-check the files served by the Nix-managed Hermes
+dashboard:
 
 ```bash
 cp apps/web-desktop/.env.example apps/web-desktop/.env
+# Set HERMES_WEB_URL in apps/web-desktop/.env
+apps/web-desktop/scripts/deploy.sh
 ```
 
-- `HERMES_WEB_URL` — the URL you open from browser/phone; used by deploy.sh
-  (health-check + printout).
-- `WEB_ALLOWED_HOSTS` — comma-separated hostnames appended to Vite's
-  `server.allowedHosts` (read by `vite.config.ts` via `loadEnv`), so Vite does
-  not block access from e.g. Tailscale names.
+The deploy script copies the build to `~/.hermes/desktop-web` by default. It
+does not start or restart any processes.
 
-## How the web build works
+## Docker
 
-1. `src/entry.ts` installs `window.hermesDesktop` (web bridge, ported from
-   [hermes-ui](https://github.com/przbadu/hermes-ui), MIT), loads `web.css`,
-   then imports the live renderer `apps/desktop/src/main` (sources come from
-   the flake input at `apps/desktop/src` + `apps/shared/src`).
-2. The bridge flips the renderer's existing **remote-gateway mode**: REST via
-   `api()`, WebSocket via `getGatewayWsUrl()`. Electron-only features are inert
-   stubs (terminal, git, pet, updates, file dialogs…).
-3. `src/web.css` declares `@source "../../desktop/src"` so Tailwind v4 scans
-   the renderer sources for utility class names (otherwise the layout breaks).
-
-## Editing the UI — only our files, never upstream
-
-1. **CSS** — `src/web-overrides.css` (import in `entry.ts`), target
-   `[data-slot=…]` selectors.
-2. **Bridge behavior** — `src/web-bridge/`.
-3. **Swap/wrap components** — add `resolve.alias` entries in `vite.config.ts`
-   pointing upstream module paths at `src/overrides/<name>.tsx` (copy or
-   re-export-with-changes; the original stays untouched).
-4. **New code** — `src/components/`, `src/lib/` wired via entry.ts or overrides.
-
-Never edit anything under `apps/desktop/` / `apps/shared/` (symlinked from the
-input). After `nix flake update hermes`, re-check any aliased module paths.
-
-## Nix flake notes
-
-- First `nix build` fails on the **placeholder `pnpmDeps.hash`** — paste the
-  real hash from the error into `flake.nix` and rebuild (one-time).
-- `devShells.default` symlinks `apps/desktop` + `apps/shared` from the input
-  only when they don't exist — never destroys a local clone's files.
-- The flake source filter keeps only `apps/web-desktop` + root package files;
-  everything else is supplied by the input.
-
-## Desktop plugins
-
-Hermes Agent **desktop plugins also work** in this web/PWA build. Built-in
-plugins (e.g. **Bot Mode**) ship with the renderer; user plugins load from your
-Hermes home (`~/.hermes/plugins`, `~/.hermes/desktop-plugins`) — in the Docker
-image they are served straight from `HERMES_HOME`.
-
-## Docker (frontend image)
-
-A nix-free frontend image that needs nothing but `docker build`. There are no
-build tools in the runtime. The build fetches the hermes-agent renderer
-(`apps/desktop`, `apps/shared`) at `HERMES_RENDERER_REV` (default `main`, so the
-latest upstream; pin a commit or tag for reproducible builds) and compiles it
-with pnpm. The runtime is a lean `nginx` that serves the static dist and proxies
-to a Hermes gateway.
+Build and run the frontend image:
 
 ```bash
-# build (primary path — plain docker build, no nix)
 docker build -t hermes-web .
 
-# run — points at the config/gateway from .env; mount .env + hermes dir + host-gateway
 docker run --rm --name hermes-web \
   -p 4174:80 \
+  --env-file apps/web-desktop/.env \
   --add-host host.docker.internal:host-gateway \
-  -v "$PWD/apps/web-desktop/.env:/app/.env:ro" \
-  -v ~/.hermes:/data/hermes \
+  -v "$HOME/.hermes:/data/hermes" \
   hermes-web
 ```
 
-Environment:
-- `HERMES_GATEWAY_URL` — Hermes gateway backend (REST over `/api`,`/auth`,`/login`
-  and WS over `/api/ws`), default `http://127.0.0.1:9119`.
-- `HERMES_HOME` — path inside the container to the hermes config; its
-  `plugins/` and `desktop-plugins/` dirs are served at `/plugins` and
-  `/desktop-plugins` (mount e.g. `~/.hermes` there). Default `/data/hermes`.
+The example environment file sets:
 
-Build args:
-- `HERMES_RENDERER_REV` — renderer to bundle; default `main` = **always the
-  latest upstream stream** on every build. Pin a commit/tag for reproducible/
-  release builds: `docker build --build-arg HERMES_RENDERER_REV=<sha|tag> .`
+- `HERMES_GATEWAY_URL` — gateway address; in Docker, use
+  `http://host.docker.internal:9119` when the gateway runs on the host.
+- `HERMES_HOME` — container path for the mounted Hermes configuration and
+  plugins. The default is `/data/hermes`.
+- `HERMES_WEB_URL` — URL used by the Nix deploy health check.
+- `WEB_ALLOWED_HOSTS` — additional hostnames allowed by Vite during local
+  development.
 
-> The nix **flake** (`flake.nix`) is a separate build path used on the VPS
-> (home-manager / `nix build`); it **does not** build this image — the Docker
-> image is built by `docker build` only. On the VPS the renderer pin is bumped
-> automatically by the daily `hermes-flake-update` timer (`nix flake update
-> hermes-mobile`), so the local deploy also tracks the latest upstream.
+Docker uses `HERMES_RENDERER_REV=main` by default. Pin a commit or tag for a
+reproducible build:
 
-Publishing: `.github/workflows/docker-build.yml` builds `linux/amd64` +
-`linux/arm64` on GitHub Actions and pushes `ghcr.io/<owner>/<repo>` whenever a
-change is merged to `main`. Each build gets an immutable `release-<commit>` tag,
-and the `main` and `latest` tags are updated for convenient deployment. `v*`
-tags also produce semver image tags. Build context is excluded of `.env`,
-`node_modules`, `dist`, `apps/desktop`, `apps/shared` via `.dockerignore`.
+```bash
+docker build --build-arg HERMES_RENDERER_REV=<commit-or-tag> -t hermes-web .
+```
 
-## Git model
+GitHub Actions publishes multi-architecture images to GHCR after changes are
+merged to `main` and for version tags.
 
-The repo is meant to be committed (a flake needs git-tracked sources), for
-example under your own fork or a fresh repo. Upstream never writes to these
-paths, so nothing conflicts.
+## Editing the UI
 
-## Changelog
+Change only this repository’s files:
 
-### v0.1.1
+- CSS overrides: `apps/web-desktop/src/web-overrides.css`
+- Web bridge behavior: `apps/web-desktop/src/web-bridge/`
+- Component swaps: `apps/web-desktop/src/overrides/` plus an alias in
+  `vite.config.ts`
+- New components and helpers: `apps/web-desktop/src/components/` and
+  `apps/web-desktop/src/lib/`
 
-Fixes from a security/correctness pass (still AI-reviewed only — see the
-provenance note above):
-
-- **Fixed: plugin listing was broken in the Docker/nginx build.**
-  `nginx.conf.template` used to hardcode `/plugins/.listing` to always return
-  `[]` and had no rule at all for `/desktop-plugins/.listing` (it fell through
-  to a 404). In production this meant the "installed plugins" browser
-  (`readDir()` in `src/web-bridge/bridge.ts`) always reported empty or errored,
-  no matter what was actually mounted at `HERMES_HOME` — silently diverging
-  from the `vite dev` middleware, which does a real listing. Both `.listing`
-  endpoints now serve nginx's built-in `autoindex` (JSON format) to list the
-  mounted directory live, at request time, matching dev behavior. (Because
-  `autoindex` only answers URIs ending in `/`, each `.listing` endpoint is
-  internally rewritten to the same path with a trailing slash, which is then
-  served by `autoindex` — no external redirect, so no scheme/port issues
-  behind a proxy.) `docker-entrypoint.sh` also `mkdir -p`s the two plugin
-  directories on startup so a fresh/empty mount reports `[]` instead of
-  404ing. Since both `.listing` endpoints now return richer `{name, type}` entries (nginx
-  autoindex's native JSON shape) instead of bare name strings, the `vite dev`
-  middleware (`vite.config.ts`) emits the same shape, and `readDir()` in
-  `bridge.ts` parses it — keeping dev and production on one format.
-- **Fixed: a path-prefix boundary bug in the plugin-root guard.** The web
-  bridge's `readFileText`/`readDir` gated access with
-  `filePath.startsWith(root)`, where `root` (e.g. `.../desktop-plugins`) has
-  no trailing slash — so a sibling path like `.../desktop-pluginsSecret` would
-  incorrectly pass as "under" the plugin root. Replaced with
-  `isUnderPluginRoot()`, which requires an exact match or a `/` boundary.
+After updating the upstream renderer with `nix flake update hermes`, verify
+that any configured aliases still match its module paths.
