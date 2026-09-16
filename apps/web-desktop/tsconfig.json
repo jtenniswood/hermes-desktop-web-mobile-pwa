@@ -17,6 +17,7 @@
     "jsx": "react-jsx",
     "noEmit": true,
     "paths": {
+      "@/app/settings/notifications-settings": ["./src/overrides/notifications-settings.tsx"],
       "@/*": ["../desktop/src/*"],
       "@/debug/dev-only": ["./src/debug-dev-only.ts"],
       "@/debug/*": ["./src/debug-dev-only.ts"],

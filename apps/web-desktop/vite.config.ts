@@ -794,6 +794,10 @@ export default defineConfig(({ command, mode }) => {
     alias: [
       { find: '@/debug/dev-only', replacement: debugEntry(command, process.env as Record<string, string>) },
       {
+        find: '@/app/settings/notifications-settings',
+        replacement: path.resolve(__dirname, 'src/overrides/notifications-settings.tsx')
+      },
+      {
         find: '@/store/titlebar-app-actions',
         replacement: path.resolve(__dirname, 'src/overrides/titlebar-app-actions.ts')
       },

@@ -87,11 +87,20 @@ serves is decided solely by `HERMES_WEB_DIST`.)
 
 ## Known limitations (stubs in the bridge)
 
-Browser notifications use the standard Notification API while the page is
-visible and the PWA service worker when the page is backgrounded. They require
-browser permission and the HTTPS deployment (or localhost); this is not a
-server push subscription, so notifications cannot be delivered after the app
-has never been opened or while the gateway has no active browser session.
+Browser notifications require permission and an HTTPS deployment (or
+localhost). The web bridge now prefers the PWA service worker for both visible
+and background pages, carries session/action metadata into notification clicks,
+and only requests permission during a recent user gesture (use Settings →
+Notifications → Test to grant it). On iOS, install the site as a Home Screen
+web app before enabling notifications. If permission is blocked, change the
+site's notification setting in the browser and retry the test.
+
+This is still local delivery over the active browser gateway session. The
+frontend does not yet subscribe to a server push endpoint, so closing every app
+tab or losing the gateway connection prevents new notifications. The service
+worker can route a click back to an existing tab or reopen the app with a
+sanitized pending activation, but it cannot create a notification without an
+event source.
 
 Local terminal, native git ops, pet overlay, quick-entry hotkey, auto-update,
 marketplace themes, local file dialogs, OAuth-in-keychain, SSH config. The

@@ -33,7 +33,6 @@ import type {
   DesktopSshResolveResult,
   HermesApiRequest,
   HermesConnection,
-  HermesNotification,
   HermesReadDirResult,
   HermesReadFileTextResult
 } from '@/global'
@@ -51,6 +50,11 @@ import {
   upstreamOriginFor,
   withGatewayRoute
 } from './gateways'
+
+import {
+  createWebNotificationRuntime,
+  type WebNotificationRuntime
+} from './notifications'
 
 declare global {
   interface Window {
@@ -762,74 +766,6 @@ function readyBootProgress(): DesktopBootProgress {
   }
 }
 
-const WEB_NOTIFICATION_READY_TIMEOUT_MS = 750
-
-async function readyServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) {return null}
-
-  try {
-    // Do not let a notification wait indefinitely for the PWA registration.
-    // This also keeps the bridge useful on plain HTTP dev/preview servers.
-    return await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise<null>(resolve => window.setTimeout(() => resolve(null), WEB_NOTIFICATION_READY_TIMEOUT_MS))
-    ])
-  } catch {
-    return null
-  }
-}
-
-async function webNotify(payload: HermesNotification): Promise<boolean> {
-  if (!('Notification' in window)) {return false}
-
-  if (Notification.permission === 'default') {
-    try {
-      await Notification.requestPermission()
-    } catch {
-      return false
-    }
-  }
-
-  if (Notification.permission !== 'granted') {return false}
-
-  const title = payload.title ?? 'Hermes'
-  const options: NotificationOptions = {
-    body: payload.body,
-    icon: '/hermes.png',
-    badge: '/hermes.png',
-    silent: payload.silent,
-    data: { url: window.location.href }
-  }
-
-  // A service-worker notification can remain visible when the tab is hidden,
-  // and its click handler can focus or reopen the PWA. Use the page API while
-  // visible so the notification stays tied to the current browser window.
-  if (document.visibilityState === 'hidden') {
-    const registration = await readyServiceWorkerRegistration()
-
-    if (registration) {
-      try {
-        await registration.showNotification(title, options)
-        return true
-      } catch {
-        // Fall through to the page notification when the SW is unavailable.
-      }
-    }
-  }
-
-  try {
-    const notification = new Notification(title, options)
-    notification.onclick = () => {
-      window.focus()
-      notification.close()
-    }
-
-    return true
-  } catch {
-    return false
-  }
-}
-
 /**
  * Everything the web build supports. `terminal` and `git` are
  * intentionally absent: their consumers probe for bridge presence and
@@ -839,6 +775,7 @@ async function webNotify(payload: HermesNotification): Promise<boolean> {
 type WebBridge = Omit<Window['hermesDesktop'], 'terminal' | 'git'>
 
 export function createWebBridge(): Window['hermesDesktop'] {
+  const notificationRuntime: WebNotificationRuntime = createWebNotificationRuntime()
   window.__HERMES_WEB_BRIDGE__ = true
 
   const bridge: WebBridge = {
@@ -1058,7 +995,7 @@ export function createWebBridge(): Window['hermesDesktop'] {
       agentSignIn: async (dashboardUrl: string): Promise<DesktopCloudAgentSignInResult> => ({ baseUrl: dashboardUrl, connected: false })
     },
     api: apiFetch,
-    notify: webNotify,
+    notify: notificationRuntime.notify,
     requestMicrophoneAccess: async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -1240,8 +1177,9 @@ export function createWebBridge(): Window['hermesDesktop'] {
     onDeepLink: unsubscribed,
     signalDeepLinkReady: async () => ({ ok: true }),
     onWindowStateChanged: unsubscribed,
-    onFocusSession: unsubscribed,
-    onNotificationAction: unsubscribed,
+    onFocusSession: notificationRuntime.onFocusSession,
+    onNotificationAction: notificationRuntime.onNotificationAction,
+    onNotificationActivate: notificationRuntime.onNotificationActivate,
     onPreviewFileChanged: unsubscribed,
     onBackendExit: unsubscribed,
     onPowerResume: unsubscribed,

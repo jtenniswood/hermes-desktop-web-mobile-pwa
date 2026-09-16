@@ -2,6 +2,15 @@
 // so we register ourselves). Only registers on HTTPS (or localhost) — service
 // workers are unavailable on plain http, which is why the Tailscale HTTPS URL
 // (hermes-web.emu-nessie.ts.net) is the PWA entry point.
+let registration: Promise<ServiceWorkerRegistration | null> = Promise.resolve(null)
+
+/** Resolves when the app's worker is ready, without throwing on unsupported
+ * browsers or development servers. Notification delivery uses this to avoid
+ * racing worker installation. */
+export function pwaRegistration(): Promise<ServiceWorkerRegistration | null> {
+  return registration
+}
+
 export function registerPwa(): void {
   if (!('serviceWorker' in navigator)) {
     return
@@ -14,12 +23,12 @@ export function registerPwa(): void {
     return
   }
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('sw.js')
-      .catch(() => {
-        // Best-effort: a failed registration (e.g. dev server) just means no
-        // offline/install support — the app still works.
-      })
-  })
+  const register = (): void => {
+    registration = navigator.serviceWorker
+      .register(new URL('sw.js', document.baseURI).toString())
+      .catch(() => null)
+  }
+
+  if (document.readyState === 'complete') register()
+  else window.addEventListener('load', register, { once: true })
 }
