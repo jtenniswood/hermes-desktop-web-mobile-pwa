@@ -17,7 +17,7 @@
    space for those controls, but the tab strip can still occupy their vertical
    band. Give the tabs their own row so both controls and Sessions/Bots remain
    usable on mobile. */
-@media (max-width: 48rem) {
+@media (max-width: 64rem) and (pointer: coarse) {
   /* Mobile browser chrome changes the visible viewport while a legacy
      100vh shell continues to occupy the larger layout viewport. Use the
      dynamic viewport so the transcript and composer end above that chrome. */
@@ -25,12 +25,42 @@
   body,
   #root,
   [data-contrib-shell] {
-    height: 100dvh !important;
+    height: var(--hermes-visual-height, 100dvh) !important;
     min-height: 0 !important;
   }
 
   [data-slot='composer-dock']:not([data-popped-out]) {
     bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  /* The upstream renderer is desktop-density by default. Give coarse-pointer
+     users a comfortable control size while leaving text links and compact
+     inline actions unchanged. */
+  :root {
+    --composer-control-size: 2.75rem;
+    --composer-control-primary-size: 3rem;
+    --composer-control-gap: 0.5rem;
+  }
+
+  [data-slot='button']:not([data-size='inline']):not([data-size='micro']):not([data-size='xs']) {
+    min-height: 2.75rem;
+  }
+
+  [data-slot='button'][data-size^='icon'] {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  [data-slot='context-menu-item'],
+  [data-slot='context-menu-checkbox-item'],
+  [data-slot='context-menu-sub-trigger'] {
+    min-height: 2.75rem;
+    padding-block: 0.625rem;
+  }
+
+  [data-hermes-context-menu-trigger] {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
   }
 
   /* The renderer positions both fixed control clusters from the same titlebar
