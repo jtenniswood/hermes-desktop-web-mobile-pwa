@@ -85,6 +85,24 @@ reproducible build:
 docker build --build-arg HERMES_RENDERER_REV=<commit-or-tag> -t hermes-web .
 ```
 
+### Connecting to a remote gateway
+
+Set `HERMES_GATEWAY_URL` in `apps/web-desktop/.env` to the remote gateway's
+base URL, then restart the dev/preview server or recreate the Docker container
+with the updated environment. The web server must be able to reach that URL.
+In the connection settings, use that same URL or the web app's own origin.
+
+The browser connects through the web server's proxy for HTTP, login, and
+WebSockets. Unlike the Mac desktop app, a browser cannot directly fetch an
+HTTP gateway from an HTTPS page. Entering a remote URL in settings alone does
+not configure the server's proxy. For additional dev/preview gateways, set
+`HERMES_GATEWAY_WHITELIST` to a comma-separated list in the same environment
+file.
+
+If an existing installed PWA still reports an unreachable gateway after an
+update, close and reopen it after the new service worker activates. Runtime
+gateway configuration is excluded from the app's offline cache.
+
 GitHub Actions publishes multi-architecture images to GHCR after changes are
 merged to `main` and for version tags.
 
