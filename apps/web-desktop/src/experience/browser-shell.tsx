@@ -27,12 +27,12 @@ function BrowserLayout() {
   const previous = useRef({ selected, bot, path: location.pathname })
   useEffect(() => {
     setDrawerOpen(false)
-    requestAnimationFrame(() => main.current?.focus())
+    if (drawerOpen) requestAnimationFrame(() => main.current?.focus())
   }, [workspacePane])
   useEffect(() => {
     if (previous.current.selected !== selected || previous.current.bot !== bot || previous.current.path !== location.pathname) {
       setDrawerOpen(false); revealTreePane('workspace')
-      requestAnimationFrame(() => main.current?.focus())
+      if (drawerOpen) requestAnimationFrame(() => main.current?.focus())
     }
     previous.current = { selected, bot, path: location.pathname }
   }, [selected, bot, location.pathname])
@@ -65,7 +65,7 @@ function BrowserLayout() {
         <div className="browser-navigation-tabs" role="tablist" aria-label="Navigation">
           {(['sessions', 'bots', 'tools'] as const).map((value, index, values) => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} onKeyDown={event => {
             const next = event.key === 'ArrowRight' ? values[(index + 1) % values.length] : event.key === 'ArrowLeft' ? values[(index + values.length - 1) % values.length] : null
-            if (next) { event.preventDefault(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
+            if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
         <label className="browser-profile">Profile<select aria-label="Profile" value={profile} onChange={event => selectProfile(event.target.value)}>{!profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}</select></label>
