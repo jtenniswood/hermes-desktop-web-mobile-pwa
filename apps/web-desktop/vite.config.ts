@@ -1,3 +1,4 @@
+import { buildInfoPlugin } from '../../scripts/build-info.mjs'
 import { defineConfig, loadEnv, type Plugin, type PreviewServer } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -382,7 +383,7 @@ ${withoutStaleFront.slice(lineStart)}`
       )
     const startMatch = /(?:export\s+)?async function openBotCanonicalChat\s*\(/.exec(webCanonicalLookup)
     const start = startMatch?.index ?? -1
-    const end = start < 0 ? -1 : webCanonicalLookup.search(/(?:export\s+)?async function prepareBotSource/, start)
+    const end = start < 0 ? -1 : webCanonicalLookup.slice(start).search(/(?:export\s+)?async function prepareBotSource/) + start
     if (start < 0 || end < 0) {
       return null
     }
@@ -701,6 +702,7 @@ export default defineConfig(({ command, mode }) => {
   return {
   base: './',
   plugins: [
+    buildInfoPlugin(),
     hermesDynamicProxy(),
     react(),
     tailwindcss(),
