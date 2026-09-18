@@ -1,3 +1,24 @@
+/* CSS zoom scales viewport units as well as the UI. Compensate the root
+   height and let the shell inherit its available width/height instead of
+   the desktop renderer's 100vw/100vh, which leave gaps below 100% scale and
+   clip content above it. Dynamic height also follows mobile browser chrome. */
+html {
+  height: calc(100dvh / var(--web-ui-scale, 1)) !important;
+}
+
+body,
+#root,
+[data-slot='sidebar-wrapper'],
+[data-contrib-shell] {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+[data-slot='sidebar-wrapper'],
+[data-contrib-shell] {
+  width: 100% !important;
+}
+
 /* HUD is an Electron-only floating window. Keep the upstream renderer intact,
    but remove its titlebar entry from the browser wrapper. The icon selector is
    stable across translated labels and scoped to titlebar tool clusters. */
@@ -18,17 +39,6 @@
    band. Give the tabs their own row so both controls and Sessions/Bots remain
    usable on mobile. */
 @media (max-width: 48rem) {
-  /* Mobile browser chrome changes the visible viewport while a legacy
-     100vh shell continues to occupy the larger layout viewport. Use the
-     dynamic viewport so the transcript and composer end above that chrome. */
-  html,
-  body,
-  #root,
-  [data-contrib-shell] {
-    height: 100dvh !important;
-    min-height: 0 !important;
-  }
-
   [data-slot='composer-dock']:not([data-popped-out]) {
     bottom: env(safe-area-inset-bottom) !important;
   }

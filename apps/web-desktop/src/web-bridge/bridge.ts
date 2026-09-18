@@ -143,7 +143,9 @@ function createWebZoomBridge(): NonNullable<Window['hermesDesktop']['zoom']> {
     // scales layout, text, controls, and icons together like Electron's
     // webContents.setZoomLevel(). Apply it before the renderer mounts to avoid
     // a visible jump on startup.
-    document.documentElement.style.setProperty('zoom', String(change.percent / 100))
+    const scale = String(change.percent / 100)
+    document.documentElement.style.setProperty('--web-ui-scale', scale)
+    document.documentElement.style.setProperty('zoom', scale)
 
     if (persist) {
       try {
