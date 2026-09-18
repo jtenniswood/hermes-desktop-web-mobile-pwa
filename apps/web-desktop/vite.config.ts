@@ -37,10 +37,12 @@ const fsAllow = [
 ]
 
 // The dev-only render/state churn counters (apps/desktop/src/debug) must be
-// imported STATICALLY above react-dom; alias the whole graph out of non-dev
-// builds (same trick as apps/desktop/vite.config.ts).
-const debugEntry = (command: string, env: Record<string, string>) =>
-  command === 'serve' || env.VITE_PERF_PROBE === '1'
+// imported STATICALLY above react-dom; alias the whole graph out of normal
+// web-dev and production builds. The upstream diagnostics depend on `bippy`,
+// which is intentionally not part of this wrapper's dependency set. Opt into
+// that graph explicitly with VITE_PERF_PROBE=1 when it is available.
+const debugEntry = (env: Record<string, string>) =>
+  env.VITE_PERF_PROBE === '1'
     ? path.resolve(__dirname, '../desktop/src/debug/dev-only.ts')
     : path.resolve(__dirname, '../desktop/src/debug/dev-only.noop.ts')
 
@@ -785,7 +787,7 @@ export default defineConfig(({ command, mode }) => {
     // under the read-only store path and fail to resolve bare imports.
     preserveSymlinks: true,
     alias: [
-      { find: '@/debug/dev-only', replacement: debugEntry(command, process.env as Record<string, string>) },
+      { find: '@/debug/dev-only', replacement: debugEntry(process.env as Record<string, string>) },
       {
         find: '@/store/titlebar-app-actions',
         replacement: path.resolve(__dirname, 'src/overrides/titlebar-app-actions.ts')

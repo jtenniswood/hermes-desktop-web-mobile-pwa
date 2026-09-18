@@ -6,7 +6,7 @@ name: docker-build
 # a normal `docker build` in CI and locally. The container only serves static
 # files + proxies to a gateway.
 #
-# Triggers: push to main, v* tags, manual dispatch, AND a DAILY 05:00 UTC build
+# Triggers: push to main, v* tags, manual dispatch, AND a DAILY 04:00 UTC build
 # so the image keeps tracking new upstream hermes-agent even with no pushes.
 
 on:
@@ -14,8 +14,8 @@ on:
     branches: [main]
     tags: ['v*']
   schedule:
-    # Rebuild every day at 05:00 UTC to pick up the latest upstream hermes-agent.
-    - cron: '0 5 * * *'
+    # Rebuild every day at 04:00 UTC to pick up the latest upstream hermes-agent.
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 jobs:
