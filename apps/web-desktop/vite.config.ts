@@ -384,7 +384,7 @@ ${withoutStaleFront.slice(lineStart)}`
     const startMatch = /(?:export\s+)?async function openBotCanonicalChat\s*\(/.exec(webCanonicalLookup)
     const start = startMatch?.index ?? -1
     const end = start < 0 ? -1 : webCanonicalLookup.slice(start).search(/(?:export\s+)?async function prepareBotSource/) + start
-    if (start < 0 || end < 0) {
+    if (start < 0 || end < start) {
       return null
     }
 
