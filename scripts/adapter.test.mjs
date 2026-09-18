@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import vm from 'node:vm'
 import ts from 'typescript'
+import { createServer } from 'vite'
 import { repositoryRoot } from './renderer.mjs'
 import { rendererAliases } from './aliases.mjs'
 
@@ -57,4 +58,19 @@ test('renderer imports stay within the upstream adapter', () => {
     }
   }
   visit(path.join(root, 'src'))
+})
+
+
+test('Vite resolves shared subpaths and wildcard-to-single-file aliases', async t => {
+  const server = await createServer({ configFile: false, root, logLevel: 'silent', resolve: { alias: rendererAliases(), preserveSymlinks: true }, server: { middlewareMode: true } })
+  t.after(() => server.close())
+  const resolver = server.environments.client.pluginContainer
+  for (const [specifier, expected] of [
+    ['@hermes/shared/translucency', '../shared/src/translucency.ts'],
+    ['@hermes/shared/i18n', '../shared/src/i18n.ts'],
+    ['@/debug/right-pane-events', 'src/debug-dev-only.ts']
+  ]) {
+    const resolved = await resolver.resolveId(specifier, path.join(root, 'src/entry.ts'))
+    assert.equal(resolved.id, path.resolve(root, expected))
+  }
 })
