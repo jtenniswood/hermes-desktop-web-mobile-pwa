@@ -101,3 +101,11 @@ state-changing callbacks. The adapter removes that annotation in memory. A
 regression test builds the same callback both without and with the fix, proving
 that profile updates survive the production bundler. Neither the installed
 package nor the fetched renderer is modified.
+
+See [captured screenshots and verification evidence](screenshots/interface-comparison/README.md)
+for the reviewed application identity, phone/desktop views and executed checks.
+
+During a controlled reload, an aborted initial module download receives one
+bounded startup retry before a composer mounts. A persistent failure stops at an
+explicit Reload screen. The retry keeps the URL and stored draft and is disabled
+when its per-tab retry marker cannot be stored, preventing reload loops.

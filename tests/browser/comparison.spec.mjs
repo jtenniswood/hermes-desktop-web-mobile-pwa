@@ -64,12 +64,17 @@ for (const experience of ['desktop', 'browser']) {
       await page.setViewportSize(viewport)
       await open(page, experience, 'preview-idea')
       const bounds = await editor(page).boundingBox()
+      expect(bounds.y).toBeGreaterThanOrEqual(0)
+      expect(bounds.x).toBeGreaterThanOrEqual(0)
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height)
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width)
+      // Let layout and CSS zoom paint before capturing the review viewport.
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-      await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}.png`), fullPage: false })
+      await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}.png`), fullPage: false, animations: 'disabled' })
       await page.getByRole('button', { name: experience === 'browser' ? 'Settings' : 'Open settings', exact: true }).click()
       await expect(page.getByText('Appearance', { exact: true }).first()).toBeVisible()
-      await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}-settings.png`), fullPage: false })
+      await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}-settings.png`), fullPage: false, animations: 'disabled' })
       expect(errors).toEqual([])
     })
     })
@@ -162,3 +167,23 @@ for (const experience of ['desktop', 'browser']) {
     await expect(page.getByText(`New ${experience} conversation`, { exact: true }).first()).toBeVisible()
   })
 }
+
+test('an interrupted startup module retries once and preserves the selected route', async ({ page }) => {
+  let failed = false
+  await page.route('**/assets/entry-*.js', async route => {
+    if (!failed) { failed = true; await route.abort('failed') } else await route.continue()
+  })
+  await open(page, 'browser', 'preview-idea')
+  expect(failed).toBe(true)
+  expect(new URL(page.url()).hash).toBe('#/preview-idea')
+  await expect(page.getByText('A useful starting point', { exact: false })).toBeVisible()
+})
+
+test('persistent module failure stops at the recovery screen without a reload loop', async ({ page }) => {
+  let documents = 0
+  page.on('request', request => { if (request.isNavigationRequest()) documents++ })
+  await page.route('**/assets/entry-*.js', route => route.abort('failed'))
+  await page.goto(`${origin}/?experience=browser#/preview-idea`)
+  await expect(page.getByRole('button', { name: 'Reload Hermes' })).toBeVisible({ timeout: 15000 })
+  expect(documents).toBe(2)
+})

@@ -91,3 +91,19 @@ test('narrow tool overlays retain upstream behavior without duplicating browser 
   assert.equal(filterBrowserNarrowNavigation(output), output)
   assert.throws(() => filterBrowserNarrowNavigation(source + '\n// drift'), /contract changed/)
 })
+
+test('startup recovery retries a module-load failure once and never loops with blocked storage', () => {
+  const store = new Map(); let reloads = 0
+  const sessionStorage = { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) }
+  const recovery = load('src/platform/startup-recovery.ts', { Error, sessionStorage, window: { location: { reload: () => reloads++ } } })
+  const interrupted = new Error('Failed to fetch dynamically imported module: /assets/entry.js')
+  assert.equal(recovery.recoverStartupChunk(new Error('Invalid configuration'), 'build'), false)
+  assert.equal(recovery.recoverStartupChunk(interrupted, 'build'), true)
+  assert.equal(recovery.recoverStartupChunk(interrupted, 'build'), false)
+  assert.equal(reloads, 1)
+  recovery.completeStartup()
+  assert.equal(recovery.recoverStartupChunk(interrupted, 'build'), true)
+  sessionStorage.getItem = () => { throw new Error('Blocked') }
+  assert.equal(recovery.recoverStartupChunk(interrupted, 'other-build'), false)
+  assert.equal(reloads, 2)
+})
