@@ -14,12 +14,27 @@ RUN node scripts/renderer.mjs \
 COPY apps/web-desktop ./apps/web-desktop
 ARG HERMES_WRAPPER_REV=unknown
 ARG HERMES_RELEASE_CHANNEL=local
+ARG HERMES_COMPARISON=0
 ARG SOURCE_DATE_EPOCH
-ENV HERMES_WRAPPER_REV=$HERMES_WRAPPER_REV \
+ENV HERMES_COMPARISON=$HERMES_COMPARISON \
+    HERMES_WRAPPER_REV=$HERMES_WRAPPER_REV \
     HERMES_RELEASE_CHANNEL=$HERMES_RELEASE_CHANNEL \
     SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH
 RUN node scripts/renderer.mjs --check \
  && pnpm --filter web-desktop run build
+
+# Optional synthetic backend, built only for the isolated review stack.
+FROM build AS preview-dependencies
+RUN node -e "require('node:fs').cpSync(require('node:path').dirname(require.resolve('ws/package.json')), '/preview-ws', { recursive: true })"
+
+FROM node:24-bookworm-slim AS preview-gateway
+WORKDIR /app
+COPY --from=preview-dependencies /preview-ws ./node_modules/ws
+COPY scripts/preview/gateway.mjs ./scripts/preview/gateway.mjs
+ENV HOST=0.0.0.0 PORT=9129
+USER node
+EXPOSE 9129
+CMD ["node", "scripts/preview/gateway.mjs"]
 
 # ---- runtime stage: nginx -------------------------------------------------------
 FROM nginx:alpine

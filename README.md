@@ -175,3 +175,10 @@ GitHub App, required checks, separate enablement switches, image promotion and
 rollback by digest. Daily renderer proposals use the exact upstream commit and
 can change only renderer lock metadata. `release.yml` is the single publisher;
 a release publishes an image without restarting the production deployment.
+
+### Interface comparison preview
+
+The review-only comparison build offers **Desktop familiar** and **Browser
+focused**, backed by the same upstream chat engine. See the [preview guide](docs/interface-comparison.md)
+for the isolated Compose stack, exact PR images, safe experience switch, and
+comparison walkthrough. Stable builds omit the comparison controls.

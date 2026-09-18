@@ -1,0 +1,67 @@
+/* Review-only browser chrome. The chat, composer, themes and surfaces are upstream. */
+.experience-control { display:flex; align-items:center; gap:.6rem; min-width:0; }
+.experience-control label { display:flex; align-items:center; gap:.6rem; font-size:.75rem; font-weight:500; }
+.experience-control select { border:1px solid var(--border); border-radius:.5rem; padding:.42rem 1.4rem .42rem .65rem; background:var(--background); color:var(--foreground); font:inherit; }
+.experience-control select:disabled { opacity:.55; cursor:wait; }
+.experience-reason { max-width:15rem; font-size:.65rem; line-height:1.3; color:var(--muted-foreground); }
+.desktop-comparison-bar { height:3.25rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.5rem 1rem; border-bottom:1px solid var(--border); background:var(--background); color:var(--foreground); }
+.desktop-comparison-bar > span { font-weight:600; font-size:.875rem; }
+.desktop-comparison-bar small { margin-left:.5rem; color:var(--muted-foreground); font-weight:400; }
+html[data-experience="desktop"] #root { display:flex; flex-direction:column; overflow:hidden; }
+.desktop-comparison-bar { flex-shrink:0; height:auto; min-height:3.25rem; }
+/* Establish a containing block for upstream fixed controls below the review bar. */
+.desktop-comparison-content { flex:1; min-height:0; position:relative; transform:translateZ(0); }
+.browser-provider { height:100%; min-height:0; display:block; }
+.browser-shell { height:100%; display:flex; flex-direction:column; color:var(--foreground); background:var(--background); overflow:hidden; }
+.browser-header { height:4.5rem; flex-shrink:0; padding:.75rem 1.5rem; display:flex; gap:1rem; align-items:center; border-bottom:1px solid var(--border); background:var(--background); }
+.browser-brand { display:flex; align-items:center; gap:.7rem; color:inherit; text-decoration:none; font-size:1.05rem; font-weight:650; letter-spacing:-.025em; }
+.browser-brand img { width:2rem; height:2rem; object-fit:contain; border-radius:.5rem; }
+.browser-brand small { display:block; font-size:.66rem; line-height:1.5; font-weight:400; letter-spacing:0; color:var(--muted-foreground); }
+.browser-header-end { margin-left:auto; display:flex; align-items:center; gap:1.3rem; }
+.browser-actions { display:flex; align-items:center; gap:.4rem; }
+.browser-actions button,.browser-tool-title button { border:1px solid var(--border); border-radius:.5rem; padding:.45rem .65rem; font-size:.75rem; background:var(--background); cursor:pointer; }
+.browser-actions svg { width:1rem; height:1rem; }
+.browser-workspace { flex:1; min-height:0; display:flex; position:relative; }
+.browser-navigation { width:19rem; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--sidebar,var(--background)); overflow:hidden; }
+.browser-navigation-tabs { display:flex; gap:.2rem; padding:.85rem .8rem; border-bottom:1px solid var(--border); }
+.browser-navigation-tabs button { flex:1; border-radius:.5rem; padding:.55rem .35rem; font-size:.8rem; font-weight:500; color:var(--muted-foreground); cursor:pointer; }
+.browser-navigation-tabs button[aria-selected="true"] { color:var(--foreground); background:var(--background); box-shadow:0 1px 4px #0001; }
+.browser-navigation-body { flex:1; min-height:0; overflow:hidden; }
+.browser-profile { display:flex; align-items:center; gap:.75rem; padding:.65rem 1rem; font-size:.7rem; color:var(--muted-foreground); border-bottom:1px solid var(--border); }
+.browser-profile select { min-width:0; flex:1; padding:.3rem; border:1px solid var(--border); border-radius:.4rem; color:var(--foreground); background:var(--background); }
+.browser-pane { height:100%; min-height:0; }
+.browser-pane[hidden],.browser-chat[hidden] { display:none; }
+.browser-navigation-footer { padding:.9rem 1rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:.5rem; font-size:.65rem; color:var(--muted-foreground); }
+.browser-navigation-footer small { margin-left:auto; font-size:.6rem; }
+.browser-connection-dot { width:.4rem; height:.4rem; border-radius:50%; background:#7b8a80; }
+.browser-main { position:relative; flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; outline:none; overflow:hidden; }
+.browser-chat { flex:1; min-height:0; display:flex; flex-direction:column; position:relative; }
+.browser-status { flex-shrink:0; border-top:1px solid var(--border); }
+.browser-tools { height:100%; overflow:auto; padding:.75rem; }
+.browser-tools p { color:var(--muted-foreground); text-transform:uppercase; font-size:.62rem; font-weight:600; letter-spacing:.08em; margin:1rem .6rem .4rem; }
+.browser-tools button { width:100%; display:block; text-align:left; padding:.55rem .65rem; border-radius:.5rem; font-size:.8rem; text-transform:capitalize; cursor:pointer; }
+.browser-tools button:hover { background:var(--accent); }
+.browser-tool-surface { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; }
+.browser-tool-title { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; border-bottom:1px solid var(--border); }
+.browser-empty { padding:1rem; font-size:.8rem; color:var(--muted-foreground); }
+.browser-menu,.browser-scrim { display:none; }
+@media (max-width:47.999rem) {
+ .browser-header { height:auto; min-height:4rem; padding:.65rem .75rem; gap:.65rem; flex-wrap:wrap; }
+ .browser-menu { display:block; font-size:1.2rem; padding:.2rem; }
+ .browser-brand { font-size:.9rem; }
+ .browser-brand img { width:1.7rem; height:1.7rem; }
+ .browser-brand small { display:none; }
+ .browser-header-end { gap:.5rem; }
+ .experience-control label > span { display:none; }
+ .experience-control select { font-size:.68rem; padding:.4rem .3rem; max-width:9.5rem; }
+ .experience-control { flex-wrap:wrap; justify-content:flex-end; max-width:11rem; gap:.2rem; }
+ .experience-reason { font-size:.6rem; max-width:11rem; }
+ .browser-actions button { font-size:.68rem; padding:.4rem; }
+ .browser-navigation { position:absolute; top:0; bottom:0; left:0; z-index:61; width:min(21rem,88vw); transform:translateX(-100%); visibility:hidden; transition:transform 160ms ease,visibility 160ms; box-shadow:8px 0 30px #0002; }
+ .browser-navigation.is-open { transform:none; visibility:visible; }
+ .browser-scrim { display:block; position:absolute; inset:0; background:#0006; z-index:60; }
+ .desktop-comparison-bar { padding:.5rem .75rem; }
+ .desktop-comparison-bar small { display:none; }
+ .browser-status { overflow-x:auto; }
+}
+@media (prefers-reduced-motion:reduce) { .browser-navigation { transition:none; } }

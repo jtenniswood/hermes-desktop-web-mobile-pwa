@@ -1,0 +1,86 @@
+import { useStore } from '@nanostores/react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useLocation, useNavigate } from 'react-router'
+import { ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, $profiles, $activeGatewayProfile, selectProfile } from '../upstream/comparison-api'
+import { ExperienceSelector } from './selector'
+import { runtimeConfig } from '../platform/runtime'
+
+export function BrowserShell() {
+  return <SidebarProvider className="browser-provider" style={{ '--sidebar-width': '100%' } as CSSProperties}>
+    <ContribWiring><BrowserLayout /><SessionTileCloseConfirm /></ContribWiring>
+  </SidebarProvider>
+}
+function BrowserLayout() {
+  const navigate = useNavigate(), location = useLocation()
+  const selected = useStore($selectedStoredSessionId), bot = useStore($selectedBot)
+  const profiles = useStore($profiles), profile = useStore($activeGatewayProfile)
+  const panes = useContributions('panes')
+  const routes = contributedRoutes(useContributions(ROUTES_AREA))
+  const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
+    try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
+  })
+  const [tool, setTool] = useState<string | null>(null)
+  const bots = panes.find(pane => pane.id === 'hermes-bots:pane')
+  const selectedTool = panes.find(pane => pane.id === tool)
+  const previous = useRef({ selected, bot, path: location.pathname })
+  useEffect(() => {
+    if (previous.current.selected !== selected || previous.current.bot !== bot || previous.current.path !== location.pathname) {
+      setDrawerOpen(false); setTool(null)
+      requestAnimationFrame(() => main.current?.focus())
+    }
+    previous.current = { selected, bot, path: location.pathname }
+  }, [selected, bot, location.pathname])
+  useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
+  useEffect(() => {
+    if (!drawerOpen) return
+    drawer.current?.querySelector<HTMLButtonElement>('button')?.focus()
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setDrawerOpen(false); menu.current?.focus() }
+      if (event.key !== 'Tab') return
+      const items = Array.from(drawer.current?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input,select,[tabindex="0"]') || []).filter(el => el.getClientRects().length)
+      const first = items[0], last = items.at(-1)
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }
+    document.addEventListener('keydown', keydown)
+    return () => document.removeEventListener('keydown', keydown)
+  }, [drawerOpen])
+  const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
+  const openRoute = (path: string) => { setTool(null); navigate(path); setDrawerOpen(false) }
+  return <div className="browser-shell" data-browser-shell="">
+    <header className="browser-header">
+      <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
+      <a className="browser-brand" href="#/" onClick={() => setTool(null)}><img src="/hermes.png" alt="" /><span>Hermes<small>{runtimeConfig().gateway.name}</small></span></a>
+      <div className="browser-header-end"><ExperienceSelector /><div id="browser-actions" className="browser-actions" /></div>
+    </header>
+    <div className="browser-workspace">
+      {drawerOpen && <button className="browser-scrim" aria-label="Close navigation" onClick={() => { setDrawerOpen(false); menu.current?.focus() }} />}
+      <aside id="browser-navigation" ref={drawer} className={`browser-navigation ${drawerOpen ? 'is-open' : ''}`} aria-label="Sessions, Bots and tools">
+        <div className="browser-navigation-tabs" role="tablist" aria-label="Navigation">
+          {(['sessions', 'bots', 'tools'] as const).map((value, index, values) => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} onKeyDown={event => {
+            const next = event.key === 'ArrowRight' ? values[(index + 1) % values.length] : event.key === 'ArrowLeft' ? values[(index + values.length - 1) % values.length] : null
+            if (next) { event.preventDefault(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
+          }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
+        </div>
+        {profiles.length > 1 && <label className="browser-profile">Profile<select aria-label="Profile" value={profile} onChange={event => selectProfile(event.target.value)}>{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}</select></label>}
+        <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
+          <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
+          <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
+          {tab === 'tools' && <nav className="browser-tools" aria-label="Tools">
+            <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button key={route.path} onClick={() => openRoute(route.path)}>{route.id.replaceAll('-', ' ')}</button>)}
+            {!!routes.length && <p>Extensions</p>}{routes.map(route => <button key={route.key} onClick={() => openRoute(route.path)}>{route.path.slice(1)}</button>)}
+            <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <button key={pane.id} onClick={() => { setTool(pane.id); setDrawerOpen(false); main.current?.focus() }}>{String(pane.title || pane.id)}</button>)}
+          </nav>}
+        </div>
+        <div className="browser-navigation-footer"><span className="browser-connection-dot" />{runtimeConfig().gateway.name}<small>Interface preview</small></div>
+      </aside>
+      <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
+        {selectedTool && <section className="browser-tool-surface"><div className="browser-tool-title"><strong>{String(selectedTool.title || selectedTool.id)}</strong><button onClick={() => setTool(null)}>Back to conversation</button></div>{surface(selectedTool)}</section>}
+        <div className="browser-chat" hidden={!!selectedTool}><WiredPane part="chatRoutes" /></div>
+        <div className="browser-status"><WiredPane part="statusbar" /></div>
+      </main>
+    </div>
+  </div>
+}

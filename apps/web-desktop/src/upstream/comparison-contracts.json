@@ -1,0 +1,26 @@
+[
+  {
+    "module": "app/index.tsx",
+    "sourceHash": "d438c9268d0bf5664261d2b0a8be9bdab296f8db92d548256099625bd7e20b5f"
+  },
+  {
+    "module": "app/contrib/controller.tsx",
+    "sourceHash": "f2ddf76ada20756a1656aa2c61f02b381d150f676866122f163f643c2c6599e8"
+  },
+  {
+    "module": "app/contrib/context.tsx",
+    "sourceHash": "24d279c9da77a4f5ad689c08008bc868e8672f50b1a6b1f54988882f87ad8462"
+  },
+  {
+    "module": "app/contrib/wiring.tsx",
+    "sourceHash": "816669c25c0fab0f2388768eb142bbce5e1435d0b9d62326170f0f4b1adc4e8d"
+  },
+  {
+    "module": "app/shell/titlebar-controls.tsx",
+    "sourceHash": "895e7795254f8c51f0d3d8b2dfe1bd38ee28bece0ffdc7516f93168ba525853e"
+  },
+  {
+    "module": "lib/storage.ts",
+    "sourceHash": "49ae07bdd059fde7d450c55a8aeef31d26d2d2604fa4ef9cb42b99000c79e7cc"
+  }
+]
