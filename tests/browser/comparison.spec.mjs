@@ -22,7 +22,7 @@ test.afterAll(async () => {
   await gateway?.close()
 })
 const selector = page => page.getByLabel('Experience', { exact: true })
-const editor = page => page.locator('[contenteditable="true"]').first()
+const editor = page => page.locator('[contenteditable="true"]:visible').first()
 async function open(page, experience, session = 'preview-week') {
   await page.goto(`${origin}/?experience=${experience}#/${session}`)
   await expect(editor(page)).toBeVisible({ timeout: 15000 })
@@ -145,3 +145,20 @@ test('browser keyboard tabs, reduced motion, dark theme, and zoom stay usable', 
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(1180)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
+
+for (const experience of ['desktop', 'browser']) {
+  test(`${experience}: new chat uses the shared composer and can reopen its session link`, async ({ page }) => {
+    await open(page, experience)
+    await page.getByRole('button', { name: 'New session', exact: true }).click()
+    await editor(page).fill(`New ${experience} conversation`)
+    await editor(page).press('Enter')
+    await expect(selector(page)).toBeDisabled()
+    await expect(selector(page)).toBeEnabled({ timeout: 15000 })
+    await expect(page.getByText('No external model was called.', { exact: false }).last()).toBeVisible()
+    const { sessions } = await (await page.request.get(`${origin}/api/sessions`)).json()
+    const created = sessions.find(session => session.title === `New ${experience} conversation`)
+    expect(created?.id).toMatch(/^preview-new-/)
+    await page.goto(`${origin}/?experience=${experience}#/${created.id}`)
+    await expect(page.getByText(`New ${experience} conversation`, { exact: true }).first()).toBeVisible()
+  })
+}

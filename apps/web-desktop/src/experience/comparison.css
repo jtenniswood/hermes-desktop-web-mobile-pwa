@@ -21,6 +21,8 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-actions { display:flex; align-items:center; gap:.4rem; }
 .browser-actions button,.browser-tool-title button { border:1px solid var(--border); border-radius:.5rem; padding:.45rem .65rem; font-size:.75rem; background:var(--background); cursor:pointer; }
 .browser-actions svg { width:1rem; height:1rem; }
+.browser-actions button { position:relative; }
+.browser-action-badge { position:absolute; top:-.4rem; right:-.35rem; padding:.1rem .25rem; border-radius:.5rem; background:var(--primary); color:var(--primary-foreground); font-size:.55rem; }
 .browser-workspace { flex:1; min-height:0; display:flex; position:relative; }
 .browser-navigation { width:19rem; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--sidebar,var(--background)); overflow:hidden; }
 .browser-navigation-tabs { display:flex; gap:.2rem; padding:.85rem .8rem; border-bottom:1px solid var(--border); }
@@ -65,3 +67,6 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
  .browser-status { overflow-x:auto; }
 }
 @media (prefers-reduced-motion:reduce) { .browser-navigation { transition:none; } }
+.browser-upstream-workspace { position:relative; display:flex; flex:1; min-height:0; min-width:0; }
+.browser-upstream-workspace [data-tree-group] :is(aside,[data-slot="sidebar"]) { border-left-width:0; border-right-width:0; box-shadow:none; }
+.browser-upstream-workspace [data-tree-group] header[class*="h-(--titlebar-height)"] { display:none; }

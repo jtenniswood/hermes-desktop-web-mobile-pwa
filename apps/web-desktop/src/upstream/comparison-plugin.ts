@@ -17,6 +17,14 @@ export function scopeComparisonStorage(source: string): string {
   if (source !== original && source !== output) throw new Error('Comparison storage scope was partially modified')
   return output
 }
+export function filterBrowserNarrowNavigation(source: string): string {
+  const before = 'panes.filter(p => paneChrome(p).collapsible && inTree.has(p.id)'
+  const after = "panes.filter(p => (document.documentElement.dataset.experience !== 'browser' || !['sessions', 'hermes-bots:pane', 'terminal'].includes(p.id)) && paneChrome(p).collapsible && inTree.has(p.id)"
+  const original = source.replace(after, before)
+  const contract = contracts.find(item => item.module.endsWith('/narrow-overlays.tsx'))!
+  if (createHash('sha256').update(original).digest('hex') !== contract.sourceHash || original.split(before).length !== 2) throw new Error('Comparison narrow tool overlay contract changed')
+  return original.replace(before, after)
+}
 export function comparisonPlugin(root: string): Plugin {
   const sourceRoot = path.resolve(root, '../desktop/src')
   return {
@@ -37,6 +45,7 @@ export function comparisonPlugin(root: string): Plugin {
       return null
     },
     transform(code, id) {
+      if (id.replaceAll('\\', '/').endsWith('/desktop/src/components/pane-shell/tree/renderer/narrow-overlays.tsx')) return { code: filterBrowserNarrowNavigation(code), map: null }
       if (!id.replaceAll('\\', '/').endsWith('/desktop/src/lib/storage.ts')) return null
       return { code: scopeComparisonStorage(code), map: null }
     }

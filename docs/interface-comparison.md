@@ -8,7 +8,9 @@ controls are included only when building with `HERMES_COMPARISON=1`.
 
 Desktop familiar retains the upstream contribution controller and layout tree.
 Browser focused supplies a header, Sessions/Bots/Tools navigation, a profile
-selector, and a drawer below 48rem. Settings and contributed tools still use
+selector, and a drawer below 48rem. Its main area reuses the upstream workspace
+tree so new-chat tabs, split sessions, route tabs and preview tools retain their
+normal lifetimes and behavior. Settings and contributed tools still use
 upstream bodies and actions. Browser navigation and upstream layout preferences
 are stored separately; theme, zoom and draft storage remain shared.
 

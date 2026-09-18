@@ -11,15 +11,17 @@ export function TitlebarControls(props: ComponentProps<typeof DesktopTitlebar>) 
   if (currentExperience() === 'desktop') return <DesktopTitlebar {...props} />
   if (!host) return null
   return createPortal(<>
+    <Slot area="titleBar.left" />
     {[...(props.leftTools || []), ...(props.tools || [])].filter(tool => !tool.hidden).map(tool =>
-      <button key={tool.id} disabled={tool.disabled} aria-label={tool.label} title={tool.title || tool.label} aria-pressed={tool.active} onClick={event => {
+      <button key={tool.id} data-tour={tool.tour} disabled={tool.disabled} aria-label={tool.label} title={tool.title || tool.label} aria-pressed={tool.active} onClick={event => {
         if (tool.href) window.open(tool.href, '_blank', 'noopener,noreferrer')
         else {
           if (tool.to) navigate(tool.to)
           tool.onSelect?.(event)
         }
-      }}>{tool.icon}</button>)}
+      }}>{tool.icon}{!!tool.badge && <span className="browser-action-badge">{tool.badge}</span>}</button>)}
     <Slot area="titleBar.center" />
+    <Slot area="titleBar.right" />
     <button onClick={props.onOpenSettings}>Settings</button>
   </>, host)
 }

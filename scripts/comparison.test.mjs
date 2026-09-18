@@ -68,3 +68,26 @@ test('experience selection respects explicit links, per-tab choice and safe relo
   assert.equal(url.searchParams.get('other'), 'keep')
   assert.equal(url.searchParams.get('experience'), 'browser')
 })
+
+test('browser workspace retains upstream tabs and tool groups while excluding duplicate navigation', () => {
+  const { browserWorkspaceTree } = load('src/upstream/workspace-tree.ts')
+  const tree = { type: 'split', id: 'root', orientation: 'row', weights: [1, 3, 1], children: [
+    { type: 'group', id: 'navigation', panes: ['sessions', 'hermes-bots:pane'], active: 'sessions' },
+    { type: 'group', id: 'main', panes: ['workspace', 'session-tile:one', 'route-tile:settings'], active: 'session-tile:one' },
+    { type: 'group', id: 'tools', panes: ['terminal', 'preview-tile:file', 'plugin:tool'], active: 'terminal' }
+  ] }
+  const result = browserWorkspaceTree(tree)
+  assert.equal(result.children.length, 2)
+  assert.equal(result.children[0].active, 'session-tile:one')
+  assert.equal(result.children[1].active, 'preview-tile:file')
+  assert.deepEqual(Array.from(result.weights), [3, 1])
+  assert.deepEqual(Array.from(result.children[1].panes), ['preview-tile:file', 'plugin:tool'])
+  assert.equal(tree.children[2].active, 'terminal', 'Projection must leave upstream layout state untouched')
+})
+test('narrow tool overlays retain upstream behavior without duplicating browser navigation', () => {
+  const { filterBrowserNarrowNavigation } = load('src/upstream/comparison-plugin.ts')
+  const source = readFileSync(path.join(root, '../desktop/src/components/pane-shell/tree/renderer/narrow-overlays.tsx'), 'utf8')
+  const output = filterBrowserNarrowNavigation(source)
+  assert.equal(filterBrowserNarrowNavigation(output), output)
+  assert.throws(() => filterBrowserNarrowNavigation(source + '\n// drift'), /contract changed/)
+})
