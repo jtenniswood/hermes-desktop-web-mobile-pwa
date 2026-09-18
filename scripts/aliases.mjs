@@ -7,8 +7,8 @@ export function rendererAliases() {
   const { compilerOptions: { paths } } = JSON.parse(readFileSync(path.join(root, 'tsconfig.aliases.json'), 'utf8'))
   return Object.entries(paths).sort(([a], [b]) => Number(a.includes('*')) - Number(b.includes('*')) || b.length - a.length).map(([find, [target]]) => {
     const replacement = path.resolve(root, target)
-    if (!find.endsWith('*')) return { find, replacement }
+    if (!find.endsWith('*')) return { find: new RegExp('^' + find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'), replacement }
     const prefix = find.slice(0, -1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    return { find: new RegExp('^' + prefix + '(.+)$'), replacement: replacement.slice(0, -1) + '$1' }
+    return { find: new RegExp('^' + prefix + '(.+)$'), replacement: target.endsWith('*') ? replacement.slice(0, -1) + '$1' : replacement }
   })
 }
