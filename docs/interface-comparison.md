@@ -92,3 +92,10 @@ titlebar, and storage contracts before enabling composition overrides. A changed
 contract fails the comparison build for review. Fetched sources stay untouched.
 This comparison PR is stacked on the foundation PRs and remains a draft for
 trying both experiences. It does not enable automatic production rollout.
+
+The build also checks a narrow compatibility fix for the locked nanostores
+1.4.0 package: its `batch()` annotation incorrectly permits the bundler to remove
+state-changing callbacks. The adapter removes that annotation in memory. A
+regression test builds the same callback both without and with the fix, proving
+that profile updates survive the production bundler. Neither the installed
+package nor the fetched renderer is modified.

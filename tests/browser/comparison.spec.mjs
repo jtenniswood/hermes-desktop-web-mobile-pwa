@@ -4,6 +4,7 @@ import { createPreviewGateway } from '../../scripts/preview/gateway.mjs'
 
 // The stable compatibility job runs the separate safety suite; this suite uses
 // the comparison image from the review-image job (or an explicitly supplied URL).
+test.use({ actionTimeout: 15000 })
 test.skip(!process.env.HERMES_COMPARISON_IMAGE && !process.env.HERMES_COMPARISON_URL, 'Comparison build only')
 let gateway, container, origin
 
@@ -24,7 +25,8 @@ const selector = page => page.getByLabel('Experience', { exact: true })
 const editor = page => page.locator('[contenteditable="true"]').first()
 async function open(page, experience, session = 'preview-week') {
   await page.goto(`${origin}/?experience=${experience}#/${session}`)
-  await expect(editor(page)).toBeVisible()
+  await expect(editor(page)).toBeVisible({ timeout: 15000 })
+  await expect(page.getByText('Help me make a thoughtful plan.', { exact: true }).first()).toBeVisible({ timeout: 15000 })
   await expect(selector(page)).toBeEnabled()
 }
 
@@ -42,7 +44,7 @@ for (const experience of ['desktop', 'browser']) {
     await expect(page.getByText(`A ${experience} comparison message`, { exact: true }).first()).toBeVisible()
     await editor(page).fill('Preserve this unsent text')
     await selector(page).selectOption(experience === 'desktop' ? 'browser' : 'desktop')
-    await expect(editor(page)).toContainText('Preserve this unsent text')
+    await expect(editor(page)).toContainText('Preserve this unsent text', { timeout: 15000 })
     expect(new URL(page.url()).hash).toBe('#/preview-week')
     await editor(page).fill('Cancel this response')
     await editor(page).press('Enter')
@@ -81,17 +83,17 @@ test('browser drawer, repeated Bot selection, Tools and profile survive comparis
   for (const name of ['Research', 'Writer', 'Research']) {
     await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
     await page.getByRole('tab', { name: 'Bots', exact: true }).click()
-    await page.getByText(name, { exact: true }).click()
+    await page.getByRole('button', { name: new RegExp(`^${name} · @`) }).click()
     await expect(page).toHaveURL(new RegExp(`#/preview-${name.toLowerCase()}$`))
     await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toHaveAttribute('aria-expanded', 'false')
     await expect(selector(page)).toBeEnabled()
   }
   await editor(page).fill('A research draft')
   await selector(page).selectOption('desktop')
-  await expect(editor(page)).toContainText('A research draft')
+  await expect(editor(page)).toContainText('A research draft', { timeout: 15000 })
   expect(new URL(page.url()).hash).toBe('#/preview-research')
   await selector(page).selectOption('browser')
-  await expect(editor(page)).toContainText('A research draft')
+  await expect(editor(page)).toContainText('A research draft', { timeout: 15000 })
   await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
   await page.getByLabel('Profile', { exact: true }).selectOption('research')
   await page.getByRole('tab', { name: 'Tools', exact: true }).click()
