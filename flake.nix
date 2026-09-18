@@ -89,7 +89,7 @@
             # `pnpm config set store-dir` in buildPhase.
             fetcherVersion = 4;
             inherit src;
-            hash = "sha256-3/vkcdFya9FJtjwi3eL/Pv4gDvDlylv+JPc6pJLuvG4=";
+            hash = "sha256-nWRSEuzqkNznYp+tBSG1AJCTVsRP7ZoPq4OoLWaJb/I=";
           };
 
           buildPhase = ''
