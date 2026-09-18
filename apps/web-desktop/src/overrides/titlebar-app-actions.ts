@@ -1,26 +1,37 @@
-import {
-  $titlebarAppActionsSide,
-  setTitlebarAppActionsSide as setUpstreamTitlebarAppActionsSide,
-  titlebarAppActionsClusterCounts as upstreamTitlebarAppActionsClusterCounts,
-  TITLEBAR_APP_ACTIONS_DEFAULT
-} from '../../../desktop/src/store/titlebar-app-actions'
+import { type Codec, persistentAtom } from '@/lib/persisted'
 
-export { $titlebarAppActionsSide, TITLEBAR_APP_ACTIONS_DEFAULT }
-export type { TitlebarAppActionsSide } from '../../../desktop/src/store/titlebar-app-actions'
+// Keep this override independent of the upstream titlebar store: the pinned
+// renderer predates it, while newer renderers use this module through our alias.
+export type TitlebarAppActionsSide = 'left' | 'right'
 
-export function setTitlebarAppActionsSide(side: Parameters<typeof setUpstreamTitlebarAppActionsSide>[0]) {
-  setUpstreamTitlebarAppActionsSide(side)
+export const TITLEBAR_APP_ACTIONS_DEFAULT: TitlebarAppActionsSide = 'right'
+
+const codec: Codec<TitlebarAppActionsSide> = {
+  decode: raw => (raw === 'left' || raw === 'right' ? raw : TITLEBAR_APP_ACTIONS_DEFAULT),
+  encode: value => value
+}
+
+export const $titlebarAppActionsSide = persistentAtom<TitlebarAppActionsSide>(
+  'hermes.desktop.titlebarAppActions',
+  TITLEBAR_APP_ACTIONS_DEFAULT,
+  codec
+)
+
+export function setTitlebarAppActionsSide(side: TitlebarAppActionsSide) {
+  $titlebarAppActionsSide.set(side)
 }
 
 /** The web wrapper hides HUD, leaving Settings and Layout as the two app tools. */
 export function titlebarAppActionsClusterCounts(
-  side: Parameters<typeof upstreamTitlebarAppActionsClusterCounts>[0],
+  side: TitlebarAppActionsSide,
   leftExtras = 0,
   rightExtras = 0
 ): { left: number; right: number } {
-  const counts = upstreamTitlebarAppActionsClusterCounts(side, leftExtras, rightExtras)
+  const sidebar = 1
+  const appActions = 2
+  const rightFixed = 2
 
   return side === 'left'
-    ? { left: counts.left - 1, right: counts.right }
-    : { left: counts.left, right: counts.right - 1 }
+    ? { left: sidebar + appActions + leftExtras, right: rightFixed + rightExtras }
+    : { left: sidebar + leftExtras, right: appActions + rightFixed + rightExtras }
 }
