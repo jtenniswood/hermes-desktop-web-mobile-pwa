@@ -18,6 +18,7 @@
     "noEmit": true,
     "paths": {
       "@/*": ["../desktop/src/*"],
+      "@/store/titlebar-app-actions": ["./src/overrides/titlebar-app-actions.ts"],
       "@/debug/dev-only": ["./src/debug-dev-only.ts"],
       "@/debug/*": ["./src/debug-dev-only.ts"],
       "@hermes/plugin-sdk": ["../desktop/src/sdk/index.ts"],
