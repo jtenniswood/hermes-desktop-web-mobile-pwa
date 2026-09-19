@@ -22,6 +22,5 @@ export function TitlebarControls(props: ComponentProps<typeof DesktopTitlebar>) 
       }}>{tool.icon}{!!tool.badge && <span className="browser-action-badge">{tool.badge}</span>}</button>)}
     <Slot area="titleBar.center" />
     <Slot area="titleBar.right" />
-    <button onClick={props.onOpenSettings}>Settings</button>
   </>, host)
 }

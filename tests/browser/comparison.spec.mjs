@@ -72,7 +72,13 @@ for (const experience of ['desktop', 'browser']) {
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
       await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}.png`), fullPage: false, animations: 'disabled' })
-      await page.getByRole('button', { name: experience === 'browser' ? 'Settings' : 'Open settings', exact: true }).click()
+      if (experience === 'browser') {
+        if (name === 'phone') await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+        await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+        await page.getByRole('navigation', { name: 'Tools', exact: true }).getByRole('button', { name: 'settings', exact: true }).click()
+      } else {
+        await page.getByRole('button', { name: 'Open settings', exact: true }).click()
+      }
       await expect(page.getByText('Appearance', { exact: true }).first()).toBeVisible()
       await page.screenshot({ path: testInfo.outputPath(`${experience}-${name}-settings.png`), fullPage: false, animations: 'disabled' })
       expect(errors).toEqual([])
