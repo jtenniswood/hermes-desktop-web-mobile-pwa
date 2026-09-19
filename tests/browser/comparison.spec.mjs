@@ -302,3 +302,42 @@ test('persistent module failure stops at the recovery screen without a reload lo
   await expect(page.getByRole('button', { name: 'Reload Hermes' })).toBeVisible({ timeout: 15000 })
   expect(documents).toBe(2)
 })
+
+for (const experience of ['desktop', 'browser']) {
+  for (const phone of [false, true]) {
+    test.describe(`${experience} chat menus on ${phone ? 'phone' : 'desktop'}`, () => {
+      const viewport = phone ? { width: 390, height: 844 } : { width: 1440, height: 960 }
+      test.use({ viewport, hasTouch: phone, isMobile: phone })
+      test('stay anchored and inside the viewport at different UI scales', async ({ page }) => {
+        await open(page, experience, 'preview-idea')
+        for (const scale of [90, 100, 125]) {
+          await page.evaluate(percent => window.hermesDesktop.zoom.setPercent(percent), scale)
+          for (const [name, align, gap] of [[/^Model ·/, 'end', 8], ['Add context', 'start', 6]]) {
+            // Radix hides background controls from accessibility queries while
+            // a modal menu is open; keep the trigger available for measurement.
+            const trigger = page.getByRole('button', { name, includeHidden: true })
+            await trigger.click()
+            const menu = page.locator('[data-slot="dropdown-menu-content"]:visible')
+            await expect(menu).toBeVisible()
+            await expect(menu).toHaveAttribute('data-side', 'top')
+            await expect.poll(async () => {
+              const anchor = await trigger.boundingBox(), popup = await menu.boundingBox()
+              if (!anchor || !popup) return Infinity
+              return Math.abs(anchor.y - popup.y - popup.height - gap)
+            }).toBeLessThan(1.5)
+            const anchor = await trigger.boundingBox(), popup = await menu.boundingBox()
+            const alignedX = align === 'end' ? anchor.x + anchor.width - popup.width : anchor.x
+            const expectedX = Math.max(8, Math.min(alignedX, viewport.width - popup.width - 8))
+            expect(Math.abs(popup.x - expectedX)).toBeLessThan(1.5)
+            expect(popup.y).toBeGreaterThanOrEqual(0)
+            expect(popup.x).toBeGreaterThanOrEqual(0)
+            expect(popup.x + popup.width).toBeLessThanOrEqual(viewport.width)
+            expect(popup.y + popup.height).toBeLessThanOrEqual(viewport.height)
+            await page.keyboard.press('Escape')
+            await expect(menu).toBeHidden()
+          }
+        }
+      })
+    })
+  }
+}
