@@ -135,7 +135,7 @@ function BrowserLayout() {
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
       <a className="browser-brand" href="#/" onClick={() => revealTreePane('workspace')}><span>Hermes<small>{runtimeConfig().gateway.name}</small></span></a>
-      <div className="browser-header-end"><ExperienceSelector /><div id="browser-actions" className="browser-actions" /></div>
+      <div className="browser-header-end"><ExperienceSelector /></div>
     </header>
     <div className="browser-workspace">
       {drawerOpen && <button className="browser-scrim" aria-label="Close navigation" onClick={() => { setDrawerOpen(false); menu.current?.focus() }} />}
@@ -174,6 +174,7 @@ function BrowserLayout() {
         </div>}
       </aside>
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
+        <div className="browser-chat-toolbar" aria-label="Chat controls"><div id="browser-actions" className="browser-actions" /></div>
         <BrowserWorkspace />
         <div className="browser-status"><WiredPane part="statusbar" /></div>
       </main>

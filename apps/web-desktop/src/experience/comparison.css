@@ -17,6 +17,10 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-brand { display:flex; align-items:center; gap:.7rem; color:inherit; text-decoration:none; font-size:1.05rem; font-weight:650; letter-spacing:-.025em; }
 .browser-brand small { display:block; font-size:.66rem; line-height:1.5; font-weight:400; letter-spacing:0; color:var(--muted-foreground); }
 .browser-header-end { margin-left:auto; display:flex; align-items:center; gap:1.3rem; }
+.browser-chat-toolbar { height:2.5rem; flex-shrink:0; display:flex; align-items:center; justify-content:flex-end; padding:0 .75rem; border-bottom:1px solid var(--border); background:var(--background); }
+.browser-chat-toolbar .browser-actions { margin-left:auto; }
+.browser-chat-toolbar .browser-actions button { width:2rem; height:2rem; display:inline-flex; align-items:center; justify-content:center; padding:.35rem; border:0; border-radius:.35rem; color:var(--muted-foreground); background:transparent; }
+.browser-chat-toolbar .browser-actions button:hover,.browser-chat-toolbar .browser-actions button:focus-visible { color:var(--foreground); background:var(--accent); outline:none; }
 .browser-actions { display:flex; align-items:center; gap:.4rem; }
 .browser-actions button,.browser-tool-title button { border:1px solid var(--border); border-radius:.5rem; padding:.45rem .65rem; font-size:.75rem; background:var(--background); cursor:pointer; }
 .browser-actions svg { width:1rem; height:1rem; }

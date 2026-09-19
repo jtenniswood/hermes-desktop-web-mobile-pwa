@@ -10,9 +10,10 @@ export function TitlebarControls(props: ComponentProps<typeof DesktopTitlebar>) 
   useEffect(() => { setHost(document.getElementById('browser-actions')) }, [])
   if (currentExperience() === 'desktop') return <DesktopTitlebar {...props} />
   if (!host) return null
+  const browserTools = [...(props.leftTools || []), ...(props.tools || [])].filter(tool => !tool.hidden && tool.id === 'settings')
   return createPortal(<>
     <Slot area="titleBar.left" />
-    {[...(props.leftTools || []), ...(props.tools || [])].filter(tool => !tool.hidden).map(tool =>
+    {browserTools.map(tool =>
       <button key={tool.id} data-tour={tool.tour} disabled={tool.disabled} aria-label={tool.label} title={tool.title || tool.label} aria-pressed={tool.active} onClick={event => {
         if (tool.href) window.open(tool.href, '_blank', 'noopener,noreferrer')
         else {
