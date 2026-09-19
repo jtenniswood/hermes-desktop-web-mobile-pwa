@@ -62,6 +62,9 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-update-panel-action:hover,.browser-update-panel-action:focus-visible { border-color:var(--ring); outline:none; }
 .browser-pane { height:100%; min-height:0; }
 .browser-sessions-pane { padding-top:.5rem; }
+/* Match the existing Pinned/Sessions rhythm across every sidebar section,
+   including consecutive messaging services and Cron jobs. */
+.browser-sessions-pane [data-sidebar="group"] { padding-bottom:.25rem; }
 .browser-pane[hidden],.browser-chat[hidden] { display:none; }
 /* Browser-focused sessions keep messaging groups compact: the platform name
    and the shared section marker are enough without the brand avatar. */
