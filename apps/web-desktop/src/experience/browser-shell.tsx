@@ -38,12 +38,30 @@ function toolRouteLabel(id: string) {
 }
 
 const TOOLS_ROUTE_IDS = new Set(['skills', 'messaging', 'artifacts'])
+const NAVIGATION_TABS = ['sessions', 'bots', 'tools'] as const
+type NavigationTab = typeof NAVIGATION_TABS[number]
+const NAVIGATION_TAB_LABELS: Record<NavigationTab, string> = {
+  sessions: 'Sessions',
+  bots: 'Bots',
+  tools: 'Tools'
+}
 const DEFAULT_NAVIGATION_WIDTH = 304
 const MIN_NAVIGATION_WIDTH = 224
 const MAX_NAVIGATION_WIDTH = 560
 
 function clampNavigationWidth(width: number) {
   return Math.min(MAX_NAVIGATION_WIDTH, Math.max(MIN_NAVIGATION_WIDTH, width))
+}
+
+function readVisibleNavigationTabs(): NavigationTab[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem('hermes-web.browser.navigation-tabs') || 'null')
+    if (Array.isArray(saved)) {
+      const visible = NAVIGATION_TABS.filter(value => saved.includes(value))
+      if (visible.length) return visible
+    }
+  } catch { /* Optional preference. */ }
+  return [...NAVIGATION_TABS]
 }
 
 export function BrowserShell() {
@@ -59,10 +77,11 @@ function BrowserLayout() {
   const workspacePane = tree && findGroupOfPane(tree, 'workspace')?.active
   const panes = useContributions('panes')
   const routes = contributedRoutes(useContributions(ROUTES_AREA))
-  const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null), profileActions = useRef<HTMLDivElement>(null), profileActionsButton = useRef<HTMLButtonElement>(null)
+  const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null), profileActions = useRef<HTMLDivElement>(null), profileActionsButton = useRef<HTMLButtonElement>(null), navigationTabsMenu = useRef<HTMLDivElement>(null)
   const requestedProfile = useRef<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileActionsOpen, setProfileActionsOpen] = useState(false)
+  const [navigationTabsMenuPosition, setNavigationTabsMenuPosition] = useState<{ x: number; y: number } | null>(null)
   const [createProfileOpen, setCreateProfileOpen] = useState(false)
   const [updateNotice, setUpdateNotice] = useState<PwaUpdateNotice | null>(() => currentPwaUpdate())
   const [updateDismissed, setUpdateDismissed] = useState(false)
@@ -76,6 +95,7 @@ function BrowserLayout() {
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
   })
+  const [visibleNavigationTabs, setVisibleNavigationTabs] = useState<NavigationTab[]>(readVisibleNavigationTabs)
   const bots = panes.find(pane => pane.id === 'hermes-bots:pane')
   const previous = useRef({ selected, bot, path: location.pathname })
   useEffect(() => {
@@ -90,6 +110,10 @@ function BrowserLayout() {
     previous.current = { selected, bot, path: location.pathname }
   }, [selected, bot, location.pathname])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
+  useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation-tabs', JSON.stringify(visibleNavigationTabs)) } catch { /* Optional preference. */ } }, [visibleNavigationTabs])
+  useEffect(() => {
+    if (!visibleNavigationTabs.includes(tab)) setTab(visibleNavigationTabs[0])
+  }, [tab, visibleNavigationTabs])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation-width', String(navigationWidth)) } catch { /* Optional preference. */ } }, [navigationWidth])
   useEffect(() => { if (tab !== 'sessions') setProfileActionsOpen(false) }, [tab])
   useEffect(() => subscribePwaUpdate(notice => {
@@ -124,6 +148,22 @@ function BrowserLayout() {
     requestAnimationFrame(() => profileActions.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus())
     return () => document.removeEventListener('pointerdown', closeOnOutsidePointer)
   }, [profileActionsOpen])
+  useEffect(() => {
+    if (!navigationTabsMenuPosition) return
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!navigationTabsMenu.current?.contains(event.target as Node)) setNavigationTabsMenuPosition(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNavigationTabsMenuPosition(null)
+    }
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    document.addEventListener('keydown', closeOnEscape)
+    requestAnimationFrame(() => navigationTabsMenu.current?.querySelector<HTMLButtonElement>('button')?.focus())
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [navigationTabsMenuPosition])
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
   const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
   const profileValue = showAllProfiles ? ALL_PROFILES : profile
@@ -161,6 +201,15 @@ function BrowserLayout() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
   }
   const nudgeNavigationWidth = (delta: number) => setNavigationWidth(width => clampNavigationWidth(width + delta))
+  const toggleNavigationTab = (value: NavigationTab) => {
+    setVisibleNavigationTabs(current => {
+      if (current.includes(value)) {
+        if (current.length === 1) return current
+        return current.filter(tabValue => tabValue !== value)
+      }
+      return NAVIGATION_TABS.filter(tabValue => current.includes(tabValue) || tabValue === value)
+    })
+  }
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
@@ -170,12 +219,24 @@ function BrowserLayout() {
     <div className="browser-workspace">
       {drawerOpen && <button className="browser-scrim" aria-label="Close navigation" onClick={() => { setDrawerOpen(false); menu.current?.focus() }} />}
       <aside id="browser-navigation" ref={drawer} className={`browser-navigation ${drawerOpen ? 'is-open' : ''}`} aria-label="Sessions, Bots and tools" style={{ '--browser-navigation-width': `${navigationWidth}px` } as CSSProperties}>
-        <div className="browser-navigation-tabs" role="tablist" aria-label="Navigation">
-          {(['sessions', 'bots', 'tools'] as const).map((value, index, values) => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} onKeyDown={event => {
+        <div className="browser-navigation-tabs" role="tablist" aria-label="Navigation" onContextMenu={event => {
+          event.preventDefault()
+          event.stopPropagation()
+          setNavigationTabsMenuPosition({ x: event.clientX, y: event.clientY })
+        }}>
+          {visibleNavigationTabs.map((value, index, values) => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} onKeyDown={event => {
             const next = event.key === 'ArrowRight' ? values[(index + 1) % values.length] : event.key === 'ArrowLeft' ? values[(index + values.length - 1) % values.length] : null
             if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
-          }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
+          }} onClick={() => { setNavigationTabsMenuPosition(null); setTab(value) }}>{NAVIGATION_TAB_LABELS[value]}</button>)}
         </div>
+        {navigationTabsMenuPosition && <div ref={navigationTabsMenu} className="browser-navigation-tabs-menu" role="menu" aria-label="Navigation tabs" style={{ left: navigationTabsMenuPosition.x, top: navigationTabsMenuPosition.y }}>
+          {NAVIGATION_TABS.map(value => {
+            const visible = visibleNavigationTabs.includes(value)
+            return <button key={value} type="button" role="menuitemcheckbox" aria-checked={visible} disabled={visible && visibleNavigationTabs.length === 1} onClick={() => toggleNavigationTab(value)}>
+              <span aria-hidden="true">{visible ? '✓' : ''}</span>{NAVIGATION_TAB_LABELS[value]}
+            </button>
+          })}
+        </div>}
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
           <div hidden={tab !== 'sessions'} className="browser-pane browser-sessions-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
