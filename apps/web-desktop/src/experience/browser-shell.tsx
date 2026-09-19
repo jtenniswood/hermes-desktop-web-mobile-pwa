@@ -35,6 +35,7 @@ function BrowserLayout() {
   const panes = useContributions('panes')
   const routes = contributedRoutes(useContributions(ROUTES_AREA))
   const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null)
+  const requestedProfile = useRef<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
@@ -54,6 +55,11 @@ function BrowserLayout() {
   }, [selected, bot, location.pathname])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
   useEffect(() => {
+    // A Bot activation can finish after a profile pick and restore the
+    // upstream all-profiles flag. Keep an explicit browser selection in force.
+    if (requestedProfile.current === profile && showAllProfiles) setShowAllProfiles(false)
+  }, [profile, showAllProfiles])
+  useEffect(() => {
     if (!drawerOpen) return
     drawer.current?.querySelector<HTMLButtonElement>('button')?.focus()
     const keydown = (event: KeyboardEvent) => {
@@ -70,7 +76,15 @@ function BrowserLayout() {
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
   const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
   const profileValue = showAllProfiles ? ALL_PROFILES : profile
-  const chooseProfile = (value: string) => value === ALL_PROFILES ? setShowAllProfiles(true) : selectProfile(value)
+  const chooseProfile = (value: string) => {
+    if (value === ALL_PROFILES) {
+      requestedProfile.current = null
+      setShowAllProfiles(true)
+      return
+    }
+    requestedProfile.current = value
+    selectProfile(value)
+  }
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
