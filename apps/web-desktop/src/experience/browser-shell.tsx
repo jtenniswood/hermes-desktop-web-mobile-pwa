@@ -216,7 +216,7 @@ function BrowserLayout() {
   }
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
-      <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
+    <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}><Codicon name="layout-sidebar-left" size="1.1rem" /></button>
       <a className="browser-brand" href="#/" onClick={() => revealTreePane('workspace')}><span>Hermes<small>{runtimeConfig().gateway.name}</small></span></a>
       <div className="browser-header-end"><ExperienceSelector /></div>
     </header>
