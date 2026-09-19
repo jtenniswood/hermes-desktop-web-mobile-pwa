@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
+import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane, $pinnedSessionIds, $sidebarPinsOpen, setSidebarPinsOpen } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 import { currentPwaUpdate, subscribePwaUpdate, type PwaUpdateNotice } from '../pwa/register'
@@ -72,6 +72,7 @@ export function BrowserShell() {
 function BrowserLayout() {
   const navigate = useNavigate(), location = useLocation()
   const selected = useStore($selectedStoredSessionId), bot = useStore($selectedBot)
+  const pinnedSessionIds = useStore($pinnedSessionIds), pinsOpen = useStore($sidebarPinsOpen)
   const profiles = useStore($profiles), profile = useStore($activeGatewayProfile), showAllProfiles = useStore($showAllProfiles)
   const tree = useStore($layoutTree)
   const workspacePane = tree && findGroupOfPane(tree, 'workspace')?.active
@@ -116,6 +117,9 @@ function BrowserLayout() {
   }, [tab, visibleNavigationTabs])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation-width', String(navigationWidth)) } catch { /* Optional preference. */ } }, [navigationWidth])
   useEffect(() => { if (tab !== 'sessions') setProfileActionsOpen(false) }, [tab])
+  useEffect(() => {
+    if (pinnedSessionIds.length === 0 && pinsOpen) setSidebarPinsOpen(false)
+  }, [pinnedSessionIds, pinsOpen])
   useEffect(() => subscribePwaUpdate(notice => {
     setUpdateNotice(notice)
     if (notice) setUpdateDismissed(false)
