@@ -252,7 +252,9 @@ for (const phone of [false, true]) {
     await page.setViewportSize(phone ? { width: 390, height: 844 } : { width: 1440, height: 960 })
     await open(page, 'browser')
     await editor(page).fill('Preserve this workspace navigation draft')
+    if (phone) await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Scheduled jobs', exact: true })).toBeVisible()
+    if (phone) await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
     const views = [
       ['command center', 'command-center', 'Search and manage sessions'],
       ['skills', 'skills', 'preview-planning'],
