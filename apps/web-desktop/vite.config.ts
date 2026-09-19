@@ -1,3 +1,5 @@
+import { dependencyCompatibilityPlugin } from './src/upstream/dependency-compatibility'
+import { comparisonPlugin } from './src/upstream/comparison-plugin'
 import { rendererOverrides } from './src/upstream/overrides'
 import { runtimeConfiguration, runtimeScripts, matchesGatewayRoute, type HostingConfiguration } from '../../scripts/runtime-config.mjs'
 import { rendererAliases } from '../../scripts/aliases.mjs'
@@ -236,11 +238,15 @@ export default defineConfig(({ command, mode }) => {
     .map(s => s.trim())
     .filter(Boolean)
 
+  const comparison = (process.env.HERMES_COMPARISON ?? env.HERMES_COMPARISON) === '1'
   return {
+  define: { __HERMES_COMPARISON__: JSON.stringify(comparison) },
   base: './',
   plugins: [
+    dependencyCompatibilityPlugin(__dirname),
     buildInfoPlugin(),
     rendererOverrides(__dirname),
+    ...(comparison ? [comparisonPlugin(__dirname)] : []),
     hermesDynamicProxy(),
     react(),
     tailwindcss(),
