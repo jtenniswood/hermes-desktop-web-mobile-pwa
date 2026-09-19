@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
@@ -38,6 +38,13 @@ function toolRouteLabel(id: string) {
 }
 
 const TOOLS_ROUTE_IDS = new Set(['skills', 'messaging', 'artifacts'])
+const DEFAULT_NAVIGATION_WIDTH = 304
+const MIN_NAVIGATION_WIDTH = 224
+const MAX_NAVIGATION_WIDTH = 560
+
+function clampNavigationWidth(width: number) {
+  return Math.min(MAX_NAVIGATION_WIDTH, Math.max(MIN_NAVIGATION_WIDTH, width))
+}
 
 export function BrowserShell() {
   return <SidebarProvider className="browser-provider" style={{ '--sidebar-width': '100%' } as CSSProperties}>
@@ -59,6 +66,13 @@ function BrowserLayout() {
   const [createProfileOpen, setCreateProfileOpen] = useState(false)
   const [updateNotice, setUpdateNotice] = useState<PwaUpdateNotice | null>(() => currentPwaUpdate())
   const [updateDismissed, setUpdateDismissed] = useState(false)
+  const [navigationWidth, setNavigationWidth] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem('hermes-web.browser.navigation-width'))
+      return Number.isFinite(saved) ? clampNavigationWidth(saved) : DEFAULT_NAVIGATION_WIDTH
+    } catch { return DEFAULT_NAVIGATION_WIDTH }
+  })
+  const navigationResize = useRef<{ startX: number; startWidth: number } | null>(null)
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
   })
@@ -76,6 +90,7 @@ function BrowserLayout() {
     previous.current = { selected, bot, path: location.pathname }
   }, [selected, bot, location.pathname])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
+  useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation-width', String(navigationWidth)) } catch { /* Optional preference. */ } }, [navigationWidth])
   useEffect(() => { if (tab !== 'sessions') setProfileActionsOpen(false) }, [tab])
   useEffect(() => subscribePwaUpdate(notice => {
     setUpdateNotice(notice)
@@ -131,6 +146,21 @@ function BrowserLayout() {
     if (action === PROFILE_ACTIONS.import) void runImportProfileFlow()
     if (action === PROFILE_ACTIONS.manage) openRoute('/profiles')
   }
+  const beginNavigationResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    event.preventDefault()
+    navigationResize.current = { startX: event.clientX, startWidth: navigationWidth }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+  const updateNavigationResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = navigationResize.current
+    if (start) setNavigationWidth(clampNavigationWidth(start.startWidth + event.clientX - start.startX))
+  }
+  const endNavigationResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    navigationResize.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+  const nudgeNavigationWidth = (delta: number) => setNavigationWidth(width => clampNavigationWidth(width + delta))
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
@@ -139,7 +169,7 @@ function BrowserLayout() {
     </header>
     <div className="browser-workspace">
       {drawerOpen && <button className="browser-scrim" aria-label="Close navigation" onClick={() => { setDrawerOpen(false); menu.current?.focus() }} />}
-      <aside id="browser-navigation" ref={drawer} className={`browser-navigation ${drawerOpen ? 'is-open' : ''}`} aria-label="Sessions, Bots and tools">
+      <aside id="browser-navigation" ref={drawer} className={`browser-navigation ${drawerOpen ? 'is-open' : ''}`} aria-label="Sessions, Bots and tools" style={{ '--browser-navigation-width': `${navigationWidth}px` } as CSSProperties}>
         <div className="browser-navigation-tabs" role="tablist" aria-label="Navigation">
           {(['sessions', 'bots', 'tools'] as const).map((value, index, values) => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} onKeyDown={event => {
             const next = event.key === 'ArrowRight' ? values[(index + 1) % values.length] : event.key === 'ArrowLeft' ? values[(index + values.length - 1) % values.length] : null
@@ -173,6 +203,12 @@ function BrowserLayout() {
           </div>
         </div>}
       </aside>
+      <div className="browser-navigation-resizer" role="separator" tabIndex={0} aria-label="Resize navigation panel" aria-orientation="vertical" aria-valuemin={MIN_NAVIGATION_WIDTH} aria-valuemax={MAX_NAVIGATION_WIDTH} aria-valuenow={Math.round(navigationWidth)} onPointerDown={beginNavigationResize} onPointerMove={updateNavigationResize} onPointerUp={endNavigationResize} onPointerCancel={endNavigationResize} onDoubleClick={() => setNavigationWidth(DEFAULT_NAVIGATION_WIDTH)} onKeyDown={event => {
+        if (event.key === 'ArrowLeft') { event.preventDefault(); nudgeNavigationWidth(-16) }
+        if (event.key === 'ArrowRight') { event.preventDefault(); nudgeNavigationWidth(16) }
+        if (event.key === 'Home') { event.preventDefault(); setNavigationWidth(MIN_NAVIGATION_WIDTH) }
+        if (event.key === 'End') { event.preventDefault(); setNavigationWidth(MAX_NAVIGATION_WIDTH) }
+      }} />
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
         <div className="browser-chat-toolbar" aria-label="Chat controls"><div className="browser-actions"><button type="button" aria-label="Open settings" title="Settings" onClick={() => openRoute('/settings')}><Codicon name="settings-gear" size="1rem" /></button></div></div>
         <BrowserWorkspace />
