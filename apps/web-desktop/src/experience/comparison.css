@@ -94,5 +94,8 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-upstream-workspace { position:relative; display:flex; flex:1; min-height:0; min-width:0; }
 .browser-upstream-workspace [data-tree-group] :is(aside,[data-slot="sidebar"]) { border-left-width:0; border-right-width:0; box-shadow:none; }
 .browser-upstream-workspace [data-tree-group] header[class*="h-(--titlebar-height)"] { display:none; }
+/* Browser chrome owns profile selection; the upstream sidebar rail would duplicate it at the bottom. */
+.browser-shell div:has(> [data-slot="profile-rail"]) { display:none !important; }
+.browser-shell [data-slot="profile-rail"] { display:none !important; }
 /* The browser's tab close affordance must be discoverable without hovering. */
 .browser-upstream-workspace [data-tree-tab][data-closeable] > span:last-child { opacity:1; pointer-events:auto; }

@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
+import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 
@@ -16,6 +16,12 @@ const TOOL_ROUTE_ICONS: Record<string, string> = {
   agents: 'hubot',
   starmap: 'pulse'
 }
+
+const PROFILE_ACTIONS = {
+  new: '__new_profile__',
+  import: '__import_profile__',
+  manage: '__manage_profiles__'
+} as const
 
 function toolRouteIcon(id: string) {
   return TOOL_ROUTE_ICONS[id] || 'folder'
@@ -37,6 +43,7 @@ function BrowserLayout() {
   const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null)
   const requestedProfile = useRef<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [createProfileOpen, setCreateProfileOpen] = useState(false)
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
   })
@@ -77,6 +84,18 @@ function BrowserLayout() {
   const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
   const profileValue = showAllProfiles ? ALL_PROFILES : profile
   const chooseProfile = (value: string) => {
+    if (value === PROFILE_ACTIONS.new) {
+      setCreateProfileOpen(true)
+      return
+    }
+    if (value === PROFILE_ACTIONS.import) {
+      void runImportProfileFlow()
+      return
+    }
+    if (value === PROFILE_ACTIONS.manage) {
+      openRoute('/profiles')
+      return
+    }
     if (value === ALL_PROFILES) {
       requestedProfile.current = null
       setShowAllProfiles(true)
@@ -100,7 +119,7 @@ function BrowserLayout() {
             if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
-        <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}</select></label>
+        <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}<optgroup label="Profile actions"><option value={PROFILE_ACTIONS.new}>New profile</option><option value={PROFILE_ACTIONS.import}>Import profile</option><option value={PROFILE_ACTIONS.manage}>Manage profiles</option></optgroup></select></label>
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
@@ -115,6 +134,15 @@ function BrowserLayout() {
         <BrowserWorkspace />
         <div className="browser-status"><WiredPane part="statusbar" /></div>
       </main>
+      <CreateProfileDialog
+        onClose={() => setCreateProfileOpen(false)}
+        onCreated={async name => {
+          await refreshProfiles()
+          selectProfile(name)
+        }}
+        open={createProfileOpen}
+        profiles={profiles}
+      />
     </div>
   </div>
 }
