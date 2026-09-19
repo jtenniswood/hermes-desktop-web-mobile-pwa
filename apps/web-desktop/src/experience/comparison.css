@@ -34,8 +34,8 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-navigation-resizer:hover,.browser-navigation-resizer:focus-visible { background:var(--primary,#4d86ff); outline:none; }
 .browser-navigation-tabs { display:flex; gap:0; min-width:0; overflow-x:auto; border-bottom:1px solid var(--browser-panel-divider); background:var(--sidebar,var(--background)); scrollbar-width:none; }
 .browser-navigation-tabs::-webkit-scrollbar { display:none; }
-.browser-navigation-tabs button { flex:0 0 auto; min-width:0; max-width:12rem; min-height:2.75rem; border:0; border-radius:0; padding:0 .5rem; color:var(--muted-foreground); background:var(--sidebar,var(--background)); font-size:.5625rem; font-weight:500; letter-spacing:.025em; text-transform:uppercase; cursor:pointer; }
-.browser-navigation-tabs button + button { border-left:1px solid color-mix(in srgb,var(--foreground) 14%,transparent); }
+.browser-navigation-tabs button { position:relative; flex:0 0 auto; min-width:0; max-width:12rem; min-height:2.75rem; border:0; border-radius:0; padding:0 .75rem; color:var(--muted-foreground); background:var(--sidebar,var(--background)); font-size:.5625rem; font-weight:500; letter-spacing:.025em; text-transform:uppercase; cursor:pointer; }
+.browser-navigation-tabs button + button::before { position:absolute; top:.35rem; bottom:.35rem; left:0; width:1px; background:color-mix(in srgb,var(--foreground) 14%,transparent); content:""; }
 .browser-navigation-tabs button:hover { color:var(--foreground); background:color-mix(in srgb,#000 7%,transparent); }
 .browser-navigation-tabs button[aria-selected="true"] { color:var(--foreground); background:var(--background); box-shadow:inset 0 -2px 0 var(--primary,#4d86ff); }
 .browser-navigation-tabs button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
