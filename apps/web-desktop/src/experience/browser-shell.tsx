@@ -134,7 +134,7 @@ function BrowserLayout() {
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
-      <a className="browser-brand" href="#/" onClick={() => revealTreePane('workspace')}><img src="/hermes.png" alt="" /><span>Hermes<small>{runtimeConfig().gateway.name}</small></span></a>
+      <a className="browser-brand" href="#/" onClick={() => revealTreePane('workspace')}><span>Hermes<small>{runtimeConfig().gateway.name}</small></span></a>
       <div className="browser-header-end"><ExperienceSelector /><div id="browser-actions" className="browser-actions" /></div>
     </header>
     <div className="browser-workspace">
