@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane, $pinnedSessionIds, $sidebarPinsOpen, setSidebarPinsOpen } from '../upstream/comparison-api'
+import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane, $pinnedSessionIds, $sidebarPinsOpen, setSidebarPinsOpen, OverlayView } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 import { currentPwaUpdate, subscribePwaUpdate, type PwaUpdateNotice } from '../pwa/register'
@@ -38,6 +38,7 @@ function toolRouteLabel(id: string) {
 }
 
 const TOOLS_ROUTE_IDS = new Set(['skills', 'messaging', 'artifacts'])
+const BROWSER_MODAL_ROUTES = new Set(['/skills', '/messaging', '/artifacts'])
 const NAVIGATION_TABS = ['sessions', 'bots', 'tools'] as const
 type NavigationTab = typeof NAVIGATION_TABS[number]
 const NAVIGATION_TAB_LABELS: Record<NavigationTab, string> = {
@@ -97,6 +98,8 @@ function BrowserLayout() {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
   })
   const [visibleNavigationTabs, setVisibleNavigationTabs] = useState<NavigationTab[]>(readVisibleNavigationTabs)
+  const browserModalReturnPath = useRef('/')
+  const browserModalRoute = BROWSER_MODAL_ROUTES.has(location.pathname)
   const bots = panes.find(pane => pane.id === 'hermes-bots:pane')
   const previous = useRef({ selected, bot, path: location.pathname })
   useEffect(() => {
@@ -169,7 +172,16 @@ function BrowserLayout() {
     }
   }, [navigationTabsMenuPosition])
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
-  const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
+  const openRoute = (path: string) => {
+    if (BROWSER_MODAL_ROUTES.has(path) && !browserModalRoute) browserModalReturnPath.current = location.pathname || '/'
+    navigateToWorkspacePage(navigate, path)
+    setDrawerOpen(false)
+  }
+  const closeBrowserModal = () => {
+    const returnPath = browserModalReturnPath.current || '/'
+    browserModalReturnPath.current = '/'
+    navigateToWorkspacePage(navigate, returnPath)
+  }
   const profileValue = showAllProfiles ? ALL_PROFILES : profile
   const chooseProfile = (value: string) => {
     if (value === ALL_PROFILES) {
@@ -276,9 +288,12 @@ function BrowserLayout() {
       }} />
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
         <div className="browser-chat-toolbar" aria-label="Chat controls"><div className="browser-actions"><button type="button" aria-label="Open settings" title="Settings" onClick={() => openRoute('/settings')}><Codicon name="settings-gear" size="1rem" /></button></div></div>
-        <BrowserWorkspace />
+        {!browserModalRoute && <BrowserWorkspace />}
         <div className="browser-status"><WiredPane part="statusbar" /></div>
       </main>
+      {browserModalRoute && <OverlayView closeLabel={`Close ${toolRouteLabel(location.pathname.slice(1))}`} onClose={closeBrowserModal}>
+        <WiredPane part="chatRoutes" />
+      </OverlayView>}
       <CreateProfileDialog
         onClose={() => setCreateProfileOpen(false)}
         onCreated={async name => {

@@ -16,6 +16,7 @@ export { $layoutTree, revealTreePane } from '@/components/pane-shell/tree/store'
 export { findGroupOfPane } from '@/components/pane-shell/tree/model'
 export { LayoutTreeRoot } from '@/components/pane-shell/tree/renderer'
 export { SessionTileCloseConfirm } from '@/app/chat/session-tile'
+export { OverlayView } from '@/app/overlays/overlay-view'
 export type { TitlebarTool } from '@/app/shell/titlebar-controls'
 
 export { BrowserWorkspace } from './browser-workspace'
