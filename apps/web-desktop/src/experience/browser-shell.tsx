@@ -147,7 +147,7 @@ function BrowserLayout() {
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
-          <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
+          <div hidden={tab !== 'sessions'} className="browser-pane browser-sessions-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
           {tab === 'tools' && <nav className="browser-tools" aria-label="Tools">
             <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => { const title = String(pane.title || pane.id); return <BrowserPanelButton key={pane.id} id={pane.id} title={sentenceCase(title)} ariaLabel={title} icon={<Codicon name="files" size="1rem" />} collapsible={Boolean((pane.data as { collapsible?: boolean } | undefined)?.collapsible)} onOpen={() => { setDrawerOpen(false); main.current?.focus() }} /> })}

@@ -49,6 +49,7 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-update-panel-action { width:100%; padding:.35rem .5rem; border:1px solid var(--border); border-radius:.35rem; color:var(--foreground); background:var(--accent); font:inherit; font-size:.7rem; cursor:pointer; }
 .browser-update-panel-action:hover,.browser-update-panel-action:focus-visible { border-color:var(--ring); outline:none; }
 .browser-pane { height:100%; min-height:0; }
+.browser-sessions-pane { padding-top:.5rem; }
 .browser-pane[hidden],.browser-chat[hidden] { display:none; }
 /* The browser Tools tab owns these workspace destinations. Remove only their
    upstream sidebar entries from Sessions so each destination has one control. */
