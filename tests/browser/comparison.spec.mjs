@@ -250,6 +250,39 @@ for (const experience of ['desktop', 'browser']) {
   })
 }
 
+for (const phone of [false, true]) {
+  test(`all browser Workspace controls open their views on ${phone ? 'phone' : 'desktop'}`, async ({ page }) => {
+    test.setTimeout(120000)
+    await page.setViewportSize(phone ? { width: 390, height: 844 } : { width: 1440, height: 960 })
+    await open(page, 'browser')
+    await editor(page).fill('Preserve this workspace navigation draft')
+    const views = [
+      ['command center', 'command-center', 'Search and manage sessions'],
+      ['skills', 'skills', 'preview-planning'],
+      ['messaging', 'messaging', 'Discord'],
+      ['webhooks', 'webhooks', 'No webhook subscriptions yet.'],
+      ['artifacts', 'artifacts', 'No artifacts found'],
+      ['cron', 'cron', 'No scheduled jobs yet'],
+      ['profiles', 'profiles', 'Research'],
+      ['agents', 'agents', 'No live subagents'],
+      ['starmap', 'starmap', 'Nothing learned yet']
+    ]
+    for (const [name, route, content] of views) {
+      if (phone) await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+      await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+      await page.getByRole('navigation', { name: 'Tools', exact: true }).getByRole('button', { name, exact: true }).click()
+      await expect(page).toHaveURL(new RegExp(`#/${route}$`))
+      const screen = route === 'command-center'
+        ? page.getByRole('textbox', { name: 'Search sessions, views, and actions', exact: true })
+        : page.getByText(content, { exact: true }).filter({ visible: true }).first()
+      await expect(screen).toBeVisible({ timeout: 15000 })
+      await expect(page.getByText(/failed to render|Something broke in the interface/)).toBeHidden()
+      await page.goBack()
+      await expect(editor(page)).toContainText('Preserve this workspace navigation draft')
+    }
+  })
+}
+
 test('an interrupted startup module retries once and preserves the selected route', async ({ page }) => {
   let failed = false
   await page.route('**/assets/entry-*.js', async route => {

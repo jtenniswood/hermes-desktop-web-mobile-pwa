@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, selectProfile, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
+import { ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, selectProfile, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 
@@ -52,7 +52,7 @@ function BrowserLayout() {
     return () => document.removeEventListener('keydown', keydown)
   }, [drawerOpen])
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
-  const openRoute = (path: string) => { revealTreePane('workspace'); navigate(path); setDrawerOpen(false) }
+  const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
@@ -73,8 +73,8 @@ function BrowserLayout() {
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
           {tab === 'tools' && <nav className="browser-tools" aria-label="Tools">
-            <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button key={route.path} onClick={() => openRoute(route.path)}>{route.id.replaceAll('-', ' ')}</button>)}
-            {!!routes.length && <p>Extensions</p>}{routes.map(route => <button key={route.key} onClick={() => openRoute(route.path)}>{route.path.slice(1)}</button>)}
+            <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button key={route.path} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}>{route.id.replaceAll('-', ' ')}</button>)}
+            {!!routes.length && <p>Extensions</p>}{routes.map(route => <button key={route.key} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}>{route.path.slice(1)}</button>)}
             <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <BrowserPanelButton key={pane.id} id={pane.id} title={String(pane.title || pane.id)} collapsible={Boolean((pane.data as { collapsible?: boolean } | undefined)?.collapsible)} onOpen={() => { setDrawerOpen(false); main.current?.focus() }} />)}
           </nav>}
         </div>

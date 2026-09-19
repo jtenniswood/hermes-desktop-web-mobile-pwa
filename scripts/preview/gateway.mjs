@@ -12,6 +12,9 @@ export function createPreviewGateway({ log = () => {}, delay = 95 } = {}) {
     { name: 'research', display_name: 'Research', description: 'Explore questions and connect ideas', model: info.model },
     { name: 'writer', display_name: 'Writer', description: 'Shape rough notes into clear writing', model: info.model }
   ]
+  const skills = [{ name: 'preview-planning', category: 'Productivity', description: 'A synthetic planning skill for interface review.', enabled: true, provenance: 'bundled' }]
+  const toolsets = [{ name: 'preview', label: 'Preview tools', description: 'Synthetic tools; no external services are called.', enabled: true, configured: true, tools: ['preview_note'] }]
+  const platforms = [{ id: 'discord', name: 'Discord', description: 'Synthetic preview only. No external messages are sent.', docs_url: '', enabled: false, configured: true, env_vars: [], gateway_running: true, state: 'disabled' }]
   const sessions = new Map(), messages = new Map(), timers = new Map(), clients = new Set()
   let count = 0
   function addSession(id, title, profile = 'default', text = '') {
@@ -115,9 +118,23 @@ export function createPreviewGateway({ log = () => {}, delay = 95 } = {}) {
     if (pathname === '/api/model/options') return send(modelOptions)
     if (pathname === '/api/tools/terminal/backends') return send({ backends: [] })
     if (pathname === '/api/projects') return send({ projects: [], active_id: null })
-    if (pathname === '/api/skills') return send({ skills: [] })
+    if (pathname === '/api/skills') return send(skills)
+    if (pathname === '/api/skills/content') return send({ name: 'preview-planning', path: '/workspace/skills/preview-planning/SKILL.md', content: '# Preview planning\n\nChoose three priorities and leave room for changes.' })
+    if (pathname === '/api/skills/toggle') { const skill = skills.find(item => item.name === parsed.name); if (skill) skill.enabled = Boolean(parsed.enabled); return send({ ok: Boolean(skill), ...skill }) }
+    if (pathname === '/api/skills/hub/official') return send({ skills: [] })
+    if (pathname === '/api/tools/toolsets') return send(toolsets)
+    if (pathname === '/api/tools/toolsets/preview' && req.method === 'PUT') { toolsets[0].enabled = Boolean(parsed.enabled); return send({ ok: true, ...toolsets[0] }) }
+    if (pathname === '/api/tools/toolsets/preview/config') return send({ name: 'preview', providers: [], env_vars: [], configured: true })
+    if (pathname === '/api/messaging/platforms') return send({ platforms })
+    if (pathname === '/api/messaging/platforms/discord' && req.method === 'PUT') { platforms[0].enabled = Boolean(parsed.enabled); platforms[0].state = platforms[0].enabled ? 'connected' : 'disabled'; return send({ ok: true, platform: 'discord', hot_served: true }) }
+    if (pathname === '/api/messaging/platforms/discord/test') return send({ ok: true, message: 'Synthetic preview connection; no external service was contacted.', state: platforms[0].state })
+    if (pathname === '/api/pairing') return send({ approved: [], pending: [] })
+    if (pathname === '/api/webhooks') return send({ base_url: 'https://preview.invalid', enabled: false, subscriptions: [] })
     if (pathname === '/api/learning/graph') return send({ nodes: [], edges: [], clusters: [], memory: [], stats: {} })
-    if (pathname === '/api/cron/jobs' || pathname === '/api/cron') return send({ jobs: [] })
+    if (pathname === '/api/cron/jobs') return send([])
+    if (pathname === '/api/cron/blueprints') return send({ blueprints: [] })
+    if (pathname === '/api/cron/delivery-targets') return send({ targets: [] })
+    if (pathname === '/api/cron') return send({ jobs: [] })
     if (pathname.includes('plugins')) return send({ plugins: [] })
     if (pathname.includes('soul')) return send({ content: 'A helpful synthetic assistant for interface review.', exists: true })
     if (pathname.includes('files') || pathname.includes('browse')) return send({ entries: [], files: [], path: '/workspace' })

@@ -62,5 +62,9 @@
   {
     "module": "app/shell/hooks/use-statusbar-items.tsx",
     "sourceHash": "787e6245a034cf9afc99f9d2cff435edaf71937d3a4179c229c1c1536e15fb07"
+  },
+  {
+    "module": "app/routes.ts",
+    "sourceHash": "80763d47d6ec35c3abd3d535b052d9a467050ceef51fe01c64de0de2b106fe3f"
   }
 ]
