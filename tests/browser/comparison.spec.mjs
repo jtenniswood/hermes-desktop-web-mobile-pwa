@@ -252,13 +252,13 @@ for (const phone of [false, true]) {
     await page.setViewportSize(phone ? { width: 390, height: 844 } : { width: 1440, height: 960 })
     await open(page, 'browser')
     await editor(page).fill('Preserve this workspace navigation draft')
+    await expect(page.getByRole('button', { name: 'Scheduled jobs', exact: true })).toBeVisible()
     const views = [
       ['command center', 'command-center', 'Search and manage sessions'],
       ['skills', 'skills', 'preview-planning'],
       ['messaging', 'messaging', 'Discord'],
       ['webhooks', 'webhooks', 'No webhook subscriptions yet.'],
       ['artifacts', 'artifacts', 'No artifacts found'],
-      ['cron', 'cron', 'No scheduled jobs yet'],
       ['profiles', 'profiles', 'Research'],
       ['agents', 'agents', 'No live subagents'],
       ['starmap', 'starmap', 'Nothing learned yet']
