@@ -31,7 +31,7 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-navigation-tabs button[aria-selected="true"] { color:var(--foreground); border-bottom-color:var(--primary,#4d86ff); }
 .browser-navigation-tabs button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
 .browser-navigation-body { flex:1; min-height:0; overflow:hidden; }
-.browser-profile-footer { position:relative; display:flex; align-items:center; gap:.45rem; flex-shrink:0; padding:.6rem .75rem .7rem; border-top:1px solid var(--border); background:var(--sidebar,var(--background)); }
+.browser-profile-footer { position:relative; display:flex; align-items:center; gap:.45rem; flex-shrink:0; padding:.6rem .75rem .7rem; border-top:1px solid color-mix(in srgb,var(--foreground) 16%,var(--background)); background:var(--sidebar,var(--background)); }
 .browser-profile-footer select { min-width:0; flex:1; padding:.3rem .45rem; border:1px solid var(--border); border-radius:.4rem; color:var(--foreground); background:var(--background); }
 .browser-profile-actions { position:relative; flex:0 0 auto; }
 .browser-profile-actions-trigger { width:1.8rem; height:1.8rem; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; border-radius:.4rem; color:var(--muted-foreground); background:transparent; font-size:1.1rem; line-height:1; cursor:pointer; }
