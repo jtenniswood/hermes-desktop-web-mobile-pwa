@@ -100,6 +100,7 @@ test('browser drawer, repeated Bot selection, Tools and profile survive comparis
   await selector(page).selectOption('browser')
   await expect(editor(page)).toContainText('A research draft', { timeout: 15000 })
   await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+  await page.getByRole('tab', { name: 'Sessions', exact: true }).click()
   await page.getByLabel('Profile', { exact: true }).selectOption('research')
   await page.getByRole('tab', { name: 'Tools', exact: true }).click()
   await expect(page.getByRole('navigation', { name: 'Tools', exact: true })).toBeVisible()
