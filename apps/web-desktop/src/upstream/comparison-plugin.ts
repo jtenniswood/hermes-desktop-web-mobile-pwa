@@ -20,10 +20,30 @@ export function scopeComparisonStorage(source: string): string {
 export function filterBrowserNarrowNavigation(source: string): string {
   const before = 'panes.filter(p => paneChrome(p).collapsible && inTree.has(p.id)'
   const after = "panes.filter(p => (document.documentElement.dataset.experience !== 'browser' || !['sessions', 'hermes-bots:pane', 'terminal'].includes(p.id)) && paneChrome(p).collapsible && inTree.has(p.id)"
-  const original = source.replace(after, before)
+  const headerTarget = '          {/* Zone-mates share the overlay'
+  const closeHeader = `          {document.documentElement.dataset.experience === 'browser' && (
+            <div className="browser-overlay-title">
+              <span>{revealed.title ?? revealed.id}</span>
+              <button aria-label={\`Close \${revealed.title ?? revealed.id} panel\`} onClick={() => { setReveal(null); closeTabPane(revealed.id) }}>×</button>
+            </div>
+          )}
+`
+  const replacements = [
+    [before, after],
+    ['import { $hiddenTreePanes, $layoutTree, $narrowViewport }', 'import { $hiddenTreePanes, $layoutTree, $narrowViewport, closeTabPane }'],
+    [headerTarget, closeHeader + headerTarget]
+  ]
+  let original = source
+  for (const [target, replacement] of replacements) original = original.replace(replacement, target)
   const contract = contracts.find(item => item.module.endsWith('/narrow-overlays.tsx'))!
-  if (createHash('sha256').update(original).digest('hex') !== contract.sourceHash || original.split(before).length !== 2) throw new Error('Comparison narrow tool overlay contract changed')
-  return original.replace(before, after)
+  if (createHash('sha256').update(original).digest('hex') !== contract.sourceHash) throw new Error('Comparison narrow tool overlay contract changed')
+  let output = original
+  for (const [target, replacement] of replacements) {
+    if (output.split(target).length !== 2) throw new Error('Comparison narrow tool overlay target changed')
+    output = output.replace(target, replacement)
+  }
+  if (source !== original && source !== output) throw new Error('Comparison narrow tool overlay was partially modified')
+  return output
 }
 export function comparisonPlugin(root: string): Plugin {
   const sourceRoot = path.resolve(root, '../desktop/src')

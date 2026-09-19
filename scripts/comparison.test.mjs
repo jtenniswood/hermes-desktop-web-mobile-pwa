@@ -83,6 +83,10 @@ test('browser workspace retains upstream tabs and tool groups while excluding du
   assert.deepEqual(Array.from(result.weights), [3, 1])
   assert.deepEqual(Array.from(result.children[1].panes), ['preview-tile:file', 'plugin:tool'])
   assert.equal(tree.children[2].active, 'terminal', 'Projection must leave upstream layout state untouched')
+  const withPanels = browserWorkspaceTree(tree, new Set(['plugin:tool']))
+  assert.equal(withPanels.children[1].tabStrip, 'always', 'Contributed panels must retain a close handle')
+  assert.equal(withPanels.children[0].tabStrip, undefined, 'Chat layout preferences stay unchanged')
+  assert.equal(tree.children[2].tabStrip, undefined, 'Close handles must not rewrite the saved layout')
 })
 test('narrow tool overlays retain upstream behavior without duplicating browser navigation', () => {
   const { filterBrowserNarrowNavigation } = load('src/upstream/comparison-plugin.ts')
@@ -90,6 +94,8 @@ test('narrow tool overlays retain upstream behavior without duplicating browser 
   const output = filterBrowserNarrowNavigation(source)
   assert.equal(filterBrowserNarrowNavigation(output), output)
   assert.throws(() => filterBrowserNarrowNavigation(source + '\n// drift'), /contract changed/)
+  assert.match(output, /Close \$\{revealed.title \?\? revealed.id\} panel/)
+  assert.throws(() => filterBrowserNarrowNavigation(output.replace('closeTabPane(revealed.id)', 'closeTabPane("files")')), /contract changed/)
 })
 
 test('startup recovery retries a module-load failure once and never loops with blocked storage', () => {

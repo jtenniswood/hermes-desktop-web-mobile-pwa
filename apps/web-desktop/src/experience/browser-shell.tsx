@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, revealTreePane, $profiles, $activeGatewayProfile, selectProfile, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
+import { ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, selectProfile, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 
@@ -75,7 +75,7 @@ function BrowserLayout() {
           {tab === 'tools' && <nav className="browser-tools" aria-label="Tools">
             <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button key={route.path} onClick={() => openRoute(route.path)}>{route.id.replaceAll('-', ' ')}</button>)}
             {!!routes.length && <p>Extensions</p>}{routes.map(route => <button key={route.key} onClick={() => openRoute(route.path)}>{route.path.slice(1)}</button>)}
-            <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <button key={pane.id} onClick={() => { revealTreePane(pane.id); setDrawerOpen(false); main.current?.focus() }}>{String(pane.title || pane.id)}</button>)}
+            <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <BrowserPanelButton key={pane.id} id={pane.id} title={String(pane.title || pane.id)} collapsible={Boolean((pane.data as { collapsible?: boolean } | undefined)?.collapsible)} onOpen={() => { setDrawerOpen(false); main.current?.focus() }} />)}
           </nav>}
         </div>
         <div className="browser-navigation-footer"><span className="browser-connection-dot" />{runtimeConfig().gateway.name}<small>Interface preview</small></div>

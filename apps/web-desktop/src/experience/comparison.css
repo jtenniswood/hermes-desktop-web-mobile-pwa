@@ -43,6 +43,10 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-tools p { color:var(--muted-foreground); text-transform:uppercase; font-size:.62rem; font-weight:600; letter-spacing:.08em; margin:1rem .6rem .4rem; }
 .browser-tools button { width:100%; display:block; text-align:left; padding:.55rem .65rem; border-radius:.5rem; font-size:.8rem; text-transform:capitalize; cursor:pointer; }
 .browser-tools button:hover { background:var(--accent); }
+.browser-tools button[aria-pressed="true"] { background:var(--accent); font-weight:600; }
+.browser-overlay-title { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.35rem .65rem; border-bottom:1px solid var(--border); font-size:.8rem; text-transform:capitalize; }
+.browser-overlay-title button { cursor:pointer; min-width:2rem; min-height:2rem; font-size:1.3rem; border-radius:.35rem; }
+.browser-overlay-title button:hover { background:var(--accent); }
 .browser-tool-surface { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; }
 .browser-tool-title { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; border-bottom:1px solid var(--border); }
 .browser-empty { padding:1rem; font-size:.8rem; color:var(--muted-foreground); }
@@ -70,3 +74,5 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-upstream-workspace { position:relative; display:flex; flex:1; min-height:0; min-width:0; }
 .browser-upstream-workspace [data-tree-group] :is(aside,[data-slot="sidebar"]) { border-left-width:0; border-right-width:0; box-shadow:none; }
 .browser-upstream-workspace [data-tree-group] header[class*="h-(--titlebar-height)"] { display:none; }
+/* The browser's tab close affordance must be discoverable without hovering. */
+.browser-upstream-workspace [data-tree-tab][data-closeable] > span:last-child { opacity:1; pointer-events:auto; }

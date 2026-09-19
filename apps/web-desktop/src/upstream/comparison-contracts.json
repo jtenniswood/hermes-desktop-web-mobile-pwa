@@ -50,5 +50,9 @@
   {
     "module": "components/pane-shell/tree/renderer/narrow-overlays.tsx",
     "sourceHash": "20a67c5bc48c272a4fd2be1205ac0681959b86760cb2b36abf2cd4bbd3a2a2e7"
+  },
+  {
+    "module": "components/ui/pane-tab.tsx",
+    "sourceHash": "56dc477e624c5419f681b2a444acd98292896bd1eea00d58115efc4d538a8643"
   }
 ]

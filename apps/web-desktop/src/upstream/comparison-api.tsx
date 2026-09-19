@@ -15,3 +15,4 @@ export { SessionTileCloseConfirm } from '@/app/chat/session-tile'
 export type { TitlebarTool } from '@/app/shell/titlebar-controls'
 
 export { BrowserWorkspace } from './browser-workspace'
+export { BrowserPanelButton } from './browser-panel-button'

@@ -151,6 +151,45 @@ test('browser keyboard tabs, reduced motion, dark theme, and zoom stay usable', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
+for (const phone of [false, true]) {
+  test(`browser contributed panels open, close and reopen on ${phone ? 'phone' : 'desktop'}`, async ({ page }) => {
+    await page.setViewportSize(phone ? { width: 390, height: 844 } : { width: 1440, height: 960 })
+    await open(page, 'browser')
+    await editor(page).fill('Keep my draft while using tools')
+    const tools = page.getByRole('navigation', { name: 'Tools', exact: true })
+    const showTools = async () => {
+      if (phone) await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+      await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+    }
+    for (const name of ['files', 'review']) {
+      await showTools()
+      const entry = tools.getByRole('button', { name, exact: true })
+      await entry.click()
+      const close = phone
+        ? page.getByRole('button', { name: `Close ${name} panel`, exact: true })
+        : page.locator(`[data-tree-tab="${name}"]`).getByRole('button', { name: 'Close', exact: true })
+      await expect(close).toBeVisible()
+      await close.click()
+      await expect(close).toBeHidden()
+      await showTools()
+      await entry.click()
+      await expect(close).toBeVisible()
+      if (phone) {
+        await close.focus()
+        await page.keyboard.press('Enter')
+      } else {
+        await expect(entry).toHaveAttribute('aria-pressed', 'true')
+        await entry.focus()
+        await page.keyboard.press('Enter')
+        await expect(entry).toHaveAttribute('aria-pressed', 'false')
+      }
+      await expect(close).toBeHidden()
+    }
+    await expect(editor(page)).toContainText('Keep my draft while using tools')
+    expect(new URL(page.url()).hash).toBe('#/preview-week')
+  })
+}
+
 for (const experience of ['desktop', 'browser']) {
   test(`${experience}: new chat uses the shared composer and can reopen its session link`, async ({ page }) => {
     await open(page, experience)

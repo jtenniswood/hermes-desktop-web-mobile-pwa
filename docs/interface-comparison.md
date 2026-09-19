@@ -14,6 +14,10 @@ normal lifetimes and behavior. Settings and contributed tools still use
 upstream bodies and actions. Browser navigation and upstream layout preferences
 are stored separately; theme, zoom and draft storage remain shared.
 
+Contributed panels have a close button even when opened alone. On desktop,
+their Tools entries also toggle them open or closed and highlight the active
+panel. On phones, Tools opens the panel as an overlay with its own close button.
+
 ## Run the isolated preview
 
 The `interface-comparison-preview` workflow builds and tests the actual nginx
