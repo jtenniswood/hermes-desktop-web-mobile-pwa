@@ -109,6 +109,10 @@ function BrowserLayout() {
     }
     if (value === ALL_PROFILES) {
       requestedProfile.current = null
+      // The session-list adapter uses this marker to route concrete profile
+      // refreshes through the shared browser connection. Clear it explicitly
+      // so the upstream ALL_PROFILES scope can request the combined view.
+      window.__HERMES_WEB_ACTIVE_PROFILE__ = null
       setShowAllProfiles(true)
       return
     }
@@ -130,7 +134,7 @@ function BrowserLayout() {
             if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
-        {tab === 'sessions' && <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}<optgroup label="Profile actions"><option value={PROFILE_ACTIONS.new}>New profile</option><option value={PROFILE_ACTIONS.import}>Import profile</option><option value={PROFILE_ACTIONS.manage}>Manage profiles</option></optgroup></select></label>}
+        {tab === 'sessions' && <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{sentenceCase(profile)}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{sentenceCase(item.display_name || item.name)}</option>)}<optgroup label="Profile actions"><option value={PROFILE_ACTIONS.new}>New profile</option><option value={PROFILE_ACTIONS.import}>Import profile</option><option value={PROFILE_ACTIONS.manage}>Manage profiles</option></optgroup></select></label>}
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
