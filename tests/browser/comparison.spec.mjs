@@ -216,7 +216,7 @@ test('browser panels close after visiting Starmap without opening a conversation
 })
 
 for (const width of [390, 1440]) {
-  test(`browser status controls and details stay accessible at ${width}px`, async ({ page }, testInfo) => {
+  test(`browser status controls stay accessible at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 960 })
     await open(page, 'browser')
     const status = page.getByRole('region', { name: 'Gateway and session status', exact: true })
@@ -224,20 +224,8 @@ for (const width of [390, 1440]) {
     await status.getByRole('button', { name: 'Smart', exact: true }).click()
     await expect(page.getByRole('menuitemradio', { name: /^Manual/ })).toBeVisible()
     await page.keyboard.press('Escape')
-    const trigger = status.getByRole('button', { name: 'Connection and session details', exact: true })
-    await trigger.click()
-    const details = page.getByRole('dialog', { name: 'Connection and session details', exact: true })
-    await expect(details.getByRole('button', { name: /client v/ })).toBeVisible()
-    await expect(details.getByRole('button', { name: /backend vsynthetic-preview/ })).toBeVisible()
-    const bounds = await details.boundingBox()
-    expect(bounds.x).toBeGreaterThanOrEqual(0)
-    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
-    expect(bounds.y + bounds.height).toBeLessThanOrEqual(960)
-    expect(await details.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await expect(status.getByRole('button', { name: 'Connection and session details', exact: true })).toHaveCount(0)
     await page.screenshot({ path: testInfo.outputPath(`browser-status-${width}.png`), animations: 'disabled' })
-    await page.keyboard.press('Escape')
-    await expect(details).toBeHidden()
-    await expect(trigger).toBeFocused()
   })
 }
 
