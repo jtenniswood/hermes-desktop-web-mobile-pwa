@@ -94,7 +94,6 @@ function BrowserLayout() {
             <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <BrowserPanelButton key={pane.id} id={pane.id} title={String(pane.title || pane.id)} icon={<Codicon name="files" size="1.25rem" />} collapsible={Boolean((pane.data as { collapsible?: boolean } | undefined)?.collapsible)} onOpen={() => { setDrawerOpen(false); main.current?.focus() }} />)}
           </nav>}
         </div>
-        <div className="browser-navigation-footer"><span className="browser-connection-dot" />{runtimeConfig().gateway.name}<small>Interface preview</small></div>
       </aside>
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
         <BrowserWorkspace />
