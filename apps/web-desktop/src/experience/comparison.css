@@ -63,6 +63,9 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-pane { height:100%; min-height:0; }
 .browser-sessions-pane { padding-top:.5rem; }
 .browser-pane[hidden],.browser-chat[hidden] { display:none; }
+/* Browser-focused sessions keep messaging groups compact: the platform name
+   and the shared section marker are enough without the brand avatar. */
+.browser-sessions-pane [class*="group/section"] > button > [aria-hidden="true"] { display:none !important; }
 /* The browser Tools tab owns these workspace destinations. Remove only their
    upstream sidebar entries from Sessions so each destination has one control. */
 .browser-shell [data-sidebar="menu-item"]:has([data-tour="sidebar-nav-skills"]),
