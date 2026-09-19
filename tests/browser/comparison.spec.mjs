@@ -91,12 +91,14 @@ test('browser drawer, repeated Bot selection, Tools and profile survive comparis
   const errors = []; page.on('pageerror', error => errors.push(error.message))
   await page.setViewportSize({ width: 390, height: 844 })
   await open(page, 'browser')
+  const menu = page.getByRole('button', { name: 'Open navigation', exact: true })
   for (const name of ['Research', 'Writer', 'Research']) {
-    await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+    if (await menu.getAttribute('aria-expanded') !== 'true') await menu.click()
+    await expect(menu).toHaveAttribute('aria-expanded', 'true')
     await page.getByRole('tab', { name: 'Bots', exact: true }).click()
     await page.getByRole('button', { name: new RegExp(`^${name} · @`) }).click()
     await expect(page).toHaveURL(new RegExp(`#/preview-${name.toLowerCase()}$`))
-    await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toHaveAttribute('aria-expanded', 'false')
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
     await expect(selector(page)).toBeEnabled()
   }
   await editor(page).fill('A research draft')
