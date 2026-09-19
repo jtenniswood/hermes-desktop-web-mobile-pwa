@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, selectProfile, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
+import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 
@@ -29,7 +29,7 @@ export function BrowserShell() {
 function BrowserLayout() {
   const navigate = useNavigate(), location = useLocation()
   const selected = useStore($selectedStoredSessionId), bot = useStore($selectedBot)
-  const profiles = useStore($profiles), profile = useStore($activeGatewayProfile)
+  const profiles = useStore($profiles), profile = useStore($activeGatewayProfile), showAllProfiles = useStore($showAllProfiles)
   const tree = useStore($layoutTree)
   const workspacePane = tree && findGroupOfPane(tree, 'workspace')?.active
   const panes = useContributions('panes')
@@ -69,6 +69,8 @@ function BrowserLayout() {
   }, [drawerOpen])
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
   const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
+  const profileValue = showAllProfiles ? ALL_PROFILES : profile
+  const chooseProfile = (value: string) => value === ALL_PROFILES ? setShowAllProfiles(true) : selectProfile(value)
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
       <button className="browser-menu" ref={menu} aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="browser-navigation" onClick={() => setDrawerOpen(open => !open)}>☰</button>
@@ -84,7 +86,7 @@ function BrowserLayout() {
             if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
-        <label className="browser-profile">Profile<select aria-label="Profile" value={profile} onChange={event => selectProfile(event.target.value)}>{!profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}</select></label>
+        <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{profile}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{item.display_name || item.name}</option>)}{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}</select></label>
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
