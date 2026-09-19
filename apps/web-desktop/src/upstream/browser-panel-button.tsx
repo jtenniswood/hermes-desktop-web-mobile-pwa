@@ -18,5 +18,5 @@ export function BrowserPanelButton({ id, title, icon, collapsible, onOpen }: { i
       requestAnimationFrame(() => window.dispatchEvent(new CustomEvent(PANE_TOGGLE_REVEAL_EVENT, { detail: { id, mode: 'open' } })))
     }
     onOpen()
-  }}><span className="browser-tool-icon">{icon}</span><span>{title}</span></button>
+  }}><span aria-hidden="true" className="browser-panel-toggle" data-open={open}><span /></span><span className="browser-tool-icon">{icon}</span><span>{title}</span></button>
 }
