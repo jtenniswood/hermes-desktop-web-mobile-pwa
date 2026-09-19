@@ -174,7 +174,7 @@ function BrowserLayout() {
         </div>}
       </aside>
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
-        <div className="browser-chat-toolbar" aria-label="Chat controls"><div id="browser-actions" className="browser-actions" /></div>
+        <div className="browser-chat-toolbar" aria-label="Chat controls"><div className="browser-actions"><button type="button" aria-label="Open settings" title="Settings" onClick={() => openRoute('/settings')}><Codicon name="settings-gear" size="1rem" /></button></div></div>
         <BrowserWorkspace />
         <div className="browser-status"><WiredPane part="statusbar" /></div>
       </main>
