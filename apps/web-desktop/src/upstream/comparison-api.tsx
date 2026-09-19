@@ -2,6 +2,7 @@
 export { ContribController as DesktopController } from '@/app/contrib/controller'
 export { ContribWiring, WiredPane } from '@/app/contrib/wiring'
 export { SidebarProvider } from '@/components/ui/sidebar'
+export { Codicon } from '@/components/ui/codicon'
 export { ContribRender, ContribBoundary } from '@/contrib/react/boundary'
 export { useContributions } from '@/contrib/react/use-contributions'
 export { contributedRoutes, ROUTES_AREA, APP_ROUTES, navigateToWorkspacePage } from '@/app/routes'

@@ -57,12 +57,13 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 
 .browser-status-detail-controls :is(button,a) { width:100%; min-height:2.25rem; height:auto; justify-content:flex-start; gap:.6rem; border-radius:.45rem; padding:.5rem; font-size:.75rem; text-align:left; }
 .browser-status-detail-controls .truncate { white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
-.browser-tools { height:100%; overflow:auto; padding:.75rem; }
+.browser-tools { height:100%; overflow:auto; padding:.75rem .65rem 1rem; }
 .browser-tools p { color:var(--muted-foreground); text-transform:uppercase; font-size:.62rem; font-weight:600; letter-spacing:.08em; margin:1rem .6rem .4rem; }
-.browser-tools button { width:100%; display:block; text-align:left; padding:.55rem .65rem; border-radius:.5rem; font-size:.8rem; text-transform:capitalize; cursor:pointer; }
-.browser-tools button:hover { background:var(--accent); }
-.browser-tools button[aria-pressed="true"] { background:var(--accent); font-weight:600; }
-.browser-tools button[aria-current="page"] { background:var(--accent); font-weight:600; }
+.browser-tools .browser-tool-row { width:100%; min-height:2.75rem; display:flex; align-items:center; justify-content:flex-start; gap:.65rem; padding:.45rem .65rem; border:1px solid transparent; border-radius:.45rem; color:var(--muted-foreground); text-align:left; font-size:.95rem; font-weight:500; text-transform:none; transition:background-color 100ms ease-out,color 100ms ease-out,border-color 100ms ease-out; cursor:pointer; }
+.browser-tools .browser-tool-row:hover { background:var(--accent); color:var(--foreground); }
+.browser-tools .browser-tool-row[aria-pressed="true"],.browser-tools .browser-tool-row[aria-current="page"] { border-color:var(--border); background:var(--accent); color:var(--foreground); }
+.browser-tools .browser-tool-row:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
+.browser-tool-icon { width:1.45rem; flex:0 0 1.45rem; display:inline-flex; align-items:center; justify-content:center; color:color-mix(in srgb,currentColor 72%,transparent); }
 .browser-overlay-title { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.35rem .65rem; border-bottom:1px solid var(--border); font-size:.8rem; text-transform:capitalize; }
 .browser-overlay-title button { cursor:pointer; min-width:2rem; min-height:2rem; font-size:1.3rem; border-radius:.35rem; }
 .browser-overlay-title button:hover { background:var(--accent); }
