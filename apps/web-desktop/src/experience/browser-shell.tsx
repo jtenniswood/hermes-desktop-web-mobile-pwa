@@ -164,7 +164,7 @@ function BrowserLayout() {
         {tab === 'sessions' && <div className="browser-profile-footer">
           <select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{sentenceCase(profile)}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{sentenceCase(item.display_name || item.name)}</option>)}</select>
           <div className="browser-profile-actions" ref={profileActions} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setProfileActionsOpen(false); profileActionsButton.current?.focus() } }}>
-            <button className="browser-profile-actions-trigger" ref={profileActionsButton} type="button" aria-label="Profile actions" aria-haspopup="menu" aria-expanded={profileActionsOpen} onClick={() => setProfileActionsOpen(open => !open)}>…</button>
+            <button className="browser-profile-actions-trigger" ref={profileActionsButton} type="button" aria-label="Profile actions" aria-haspopup="menu" aria-expanded={profileActionsOpen} onClick={() => setProfileActionsOpen(open => !open)}><Codicon name="kebab-vertical" size="1rem" /></button>
             {profileActionsOpen && <div className="browser-profile-actions-menu" role="menu" aria-label="Profile actions">
               <button type="button" role="menuitem" onClick={() => profileAction(PROFILE_ACTIONS.new)}>New profile</button>
               <button type="button" role="menuitem" onClick={() => profileAction(PROFILE_ACTIONS.import)}>Import profile</button>
