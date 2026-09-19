@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, ContribBoundary, useContributions, ROUTES_AREA, contributedRoutes, APP_ROUTES, navigateToWorkspacePage, $selectedStoredSessionId, $selectedBot, SessionTileCloseConfirm, BrowserWorkspace, BrowserPanelButton, revealTreePane, $profiles, $activeGatewayProfile, $showAllProfiles, ALL_PROFILES, CreateProfileDialog, refreshProfiles, runImportProfileFlow, selectProfile, setShowAllProfiles, $layoutTree, findGroupOfPane } from '../upstream/comparison-api'
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
+import { currentPwaUpdate, subscribePwaUpdate, type PwaUpdateNotice } from '../pwa/register'
 
 const TOOL_ROUTE_META: Record<string, { label: string; icon: string }> = {
   'command-center': { label: 'Command center', icon: 'symbol-misc' },
@@ -56,6 +57,8 @@ function BrowserLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileActionsOpen, setProfileActionsOpen] = useState(false)
   const [createProfileOpen, setCreateProfileOpen] = useState(false)
+  const [updateNotice, setUpdateNotice] = useState<PwaUpdateNotice | null>(() => currentPwaUpdate())
+  const [updateDismissed, setUpdateDismissed] = useState(false)
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
   })
@@ -74,6 +77,10 @@ function BrowserLayout() {
   }, [selected, bot, location.pathname])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
   useEffect(() => { if (tab !== 'sessions') setProfileActionsOpen(false) }, [tab])
+  useEffect(() => subscribePwaUpdate(notice => {
+    setUpdateNotice(notice)
+    if (notice) setUpdateDismissed(false)
+  }), [])
   useEffect(() => {
     // A Bot activation can finish after a profile pick and restore the
     // upstream all-profiles flag. Keep an explicit browser selection in force.
@@ -149,6 +156,11 @@ function BrowserLayout() {
             {!!routes.length && <p>Extensions</p>}{routes.map(route => <button className="browser-tool-row" key={route.key} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}><span className="browser-tool-icon"><Codicon name="folder" size="1rem" /></span><span>{sentenceCase(route.path.slice(1))}</span></button>)}
           </nav>}
         </div>
+        {updateNotice && !updateDismissed && <div className="browser-update-panel" role="status" aria-label="Application update">
+          <div className="browser-update-panel-heading"><strong>Update available</strong><button type="button" aria-label="Dismiss update" onClick={() => setUpdateDismissed(true)}>×</button></div>
+          <p>{updateNotice.message}</p>
+          <button type="button" className="browser-update-panel-action" onClick={updateNotice.update}>Update when safe</button>
+        </div>}
         {tab === 'sessions' && <div className="browser-profile-footer">
           <select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{sentenceCase(profile)}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{sentenceCase(item.display_name || item.name)}</option>)}</select>
           <div className="browser-profile-actions" ref={profileActions} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setProfileActionsOpen(false); profileActionsButton.current?.focus() } }}>

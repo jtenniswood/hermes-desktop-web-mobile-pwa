@@ -40,6 +40,14 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-profile-actions-menu { position:absolute; right:0; bottom:calc(100% + .4rem); z-index:70; min-width:10rem; padding:.3rem; border:1px solid var(--border); border-radius:.45rem; background:var(--popover,var(--background)); box-shadow:0 .5rem 1.5rem #0005; }
 .browser-profile-actions-menu button { width:100%; display:block; padding:.4rem .55rem; border:0; border-radius:.3rem; color:var(--foreground); background:transparent; font:inherit; font-size:.75rem; line-height:1.35; text-align:left; white-space:nowrap; cursor:pointer; }
 .browser-profile-actions-menu button:hover,.browser-profile-actions-menu button:focus-visible { background:var(--accent); outline:none; }
+.browser-update-panel { flex-shrink:0; margin:.55rem .65rem 0; padding:.6rem; border:1px solid var(--border); border-radius:.55rem; background:var(--background); color:var(--foreground); box-shadow:0 .25rem .8rem #0002; }
+.browser-update-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:.5rem; font-size:.75rem; }
+.browser-update-panel-heading strong { font-weight:600; }
+.browser-update-panel-heading button { width:1.35rem; height:1.35rem; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:.3rem; color:var(--muted-foreground); background:transparent; font-size:1rem; line-height:1; cursor:pointer; }
+.browser-update-panel-heading button:hover,.browser-update-panel-heading button:focus-visible { background:var(--accent); color:var(--foreground); outline:none; }
+.browser-update-panel p { margin:.35rem 0 .55rem; color:var(--muted-foreground); font-size:.7rem; line-height:1.35; }
+.browser-update-panel-action { width:100%; padding:.35rem .5rem; border:1px solid var(--border); border-radius:.35rem; color:var(--foreground); background:var(--accent); font:inherit; font-size:.7rem; cursor:pointer; }
+.browser-update-panel-action:hover,.browser-update-panel-action:focus-visible { border-color:var(--ring); outline:none; }
 .browser-pane { height:100%; min-height:0; }
 .browser-pane[hidden],.browser-chat[hidden] { display:none; }
 /* The browser Tools tab owns these workspace destinations. Remove only their
