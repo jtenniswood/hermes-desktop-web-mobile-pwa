@@ -24,10 +24,12 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-action-badge { position:absolute; top:-.4rem; right:-.35rem; padding:.1rem .25rem; border-radius:.5rem; background:var(--primary); color:var(--primary-foreground); font-size:.55rem; }
 .browser-workspace { flex:1; min-height:0; display:flex; position:relative; }
 .browser-navigation { width:19rem; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--sidebar,var(--background)); overflow:hidden; }
-.browser-navigation-tabs { display:flex; gap:0; padding:0 .75rem; border-bottom:1px solid var(--border); background:var(--background); }
-.browser-navigation-tabs button { flex:0 0 auto; min-height:2.75rem; border:0; border-bottom:2px solid transparent; border-radius:0; padding:.6rem .55rem .5rem; color:var(--muted-foreground); font-size:.75rem; font-weight:500; letter-spacing:.07em; text-transform:uppercase; cursor:pointer; }
-.browser-navigation-tabs button:hover { color:var(--foreground); }
-.browser-navigation-tabs button[aria-selected="true"] { color:var(--foreground); border-bottom-color:var(--primary,#4d86ff); }
+.browser-navigation-tabs { display:flex; gap:0; min-width:0; overflow-x:auto; border-bottom:1px solid var(--border); background:var(--sidebar,var(--background)); scrollbar-width:none; }
+.browser-navigation-tabs::-webkit-scrollbar { display:none; }
+.browser-navigation-tabs button { flex:0 0 auto; min-width:0; max-width:12rem; min-height:2.75rem; border:0; border-radius:0; padding:0 .5rem; color:var(--muted-foreground); background:var(--sidebar,var(--background)); font-size:.5625rem; font-weight:500; letter-spacing:.025em; text-transform:uppercase; cursor:pointer; }
+.browser-navigation-tabs button + button { border-left:1px solid color-mix(in srgb,var(--foreground) 14%,transparent); }
+.browser-navigation-tabs button:hover { color:var(--foreground); background:color-mix(in srgb,#000 7%,transparent); }
+.browser-navigation-tabs button[aria-selected="true"] { color:var(--foreground); background:var(--background); box-shadow:inset 0 -2px 0 var(--primary,#4d86ff); }
 .browser-navigation-tabs button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
 .browser-navigation-body { flex:1; min-height:0; overflow:hidden; }
 .browser-profile-footer { position:relative; display:flex; align-items:center; gap:.45rem; flex-shrink:0; padding:.6rem .75rem .7rem; border-top:1px solid color-mix(in srgb,var(--foreground) 16%,var(--background)); background:var(--sidebar,var(--background)); }
