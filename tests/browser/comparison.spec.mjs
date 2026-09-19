@@ -190,6 +190,49 @@ for (const phone of [false, true]) {
   })
 }
 
+test('browser panels close after visiting Starmap without opening a conversation', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 960 })
+  await page.goto(`${origin}/?experience=browser#/starmap`)
+  await expect(selector(page)).toBeEnabled({ timeout: 15000 })
+  await expect(page.getByText('Nothing learned yet', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Close memory graph', exact: true }).click()
+  await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+  for (const name of ['files', 'review']) {
+    await page.getByRole('navigation', { name: 'Tools', exact: true }).getByRole('button', { name, exact: true }).click()
+    const close = page.locator(`[data-tree-tab="${name}"]`).getByRole('button', { name: 'Close', exact: true })
+    await expect(close).toBeVisible()
+    await close.click()
+    await expect(close).toBeHidden()
+  }
+  await expect(page.getByText('Something broke in the interface', { exact: true })).toBeHidden()
+})
+
+for (const width of [390, 1440]) {
+  test(`browser status controls and details stay accessible at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 960 })
+    await open(page, 'browser')
+    const status = page.getByRole('region', { name: 'Gateway and session status', exact: true })
+    await expect(status.getByRole('button', { name: /^Gateway/ })).toBeVisible()
+    await status.getByRole('button', { name: 'Smart', exact: true }).click()
+    await expect(page.getByRole('menuitemradio', { name: /^Manual/ })).toBeVisible()
+    await page.keyboard.press('Escape')
+    const trigger = status.getByRole('button', { name: 'Connection and session details', exact: true })
+    await trigger.click()
+    const details = page.getByRole('dialog', { name: 'Connection and session details', exact: true })
+    await expect(details.getByRole('button', { name: /client v/ })).toBeVisible()
+    await expect(details.getByRole('button', { name: /backend vsynthetic-preview/ })).toBeVisible()
+    const bounds = await details.boundingBox()
+    expect(bounds.x).toBeGreaterThanOrEqual(0)
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(960)
+    expect(await details.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath(`browser-status-${width}.png`), animations: 'disabled' })
+    await page.keyboard.press('Escape')
+    await expect(details).toBeHidden()
+    await expect(trigger).toBeFocused()
+  })
+}
+
 for (const experience of ['desktop', 'browser']) {
   test(`${experience}: new chat uses the shared composer and can reopen its session link`, async ({ page }) => {
     await open(page, experience)

@@ -98,6 +98,25 @@ test('narrow tool overlays retain upstream behavior without duplicating browser 
   assert.throws(() => filterBrowserNarrowNavigation(output.replace('closeTabPane(revealed.id)', 'closeTabPane("files")')), /contract changed/)
 })
 
+test('empty workspace panels retain a working close action without changing desktop behavior', () => {
+  const { closeBrowserWorkspacePanels } = load('src/upstream/comparison-plugin.ts')
+  const source = readFileSync(path.join(root, '../desktop/src/components/pane-shell/tree/store.ts'), 'utf8')
+  const output = closeBrowserWorkspacePanels(source)
+  assert.equal(closeBrowserWorkspacePanels(output), output)
+  assert.throws(() => closeBrowserWorkspacePanels(source + '\n// drift'), /close contract changed/)
+  assert.match(output, /dataset.experience === 'browser'/)
+  assert.throws(() => closeBrowserWorkspacePanels(output.replace('setTreePaneHidden(paneId, true)', 'setTreePaneHidden(paneId, false)')), /close contract changed/)
+})
+
+test('browser status chrome reuses the checked upstream item renderer', () => {
+  const { exportBrowserStatusbarItem } = load('src/upstream/comparison-plugin.ts')
+  const source = readFileSync(path.join(root, '../desktop/src/app/shell/statusbar-controls.tsx'), 'utf8')
+  const output = exportBrowserStatusbarItem(source)
+  assert.equal(exportBrowserStatusbarItem(output), output)
+  assert.throws(() => exportBrowserStatusbarItem(source + '\n// drift'), /statusbar item contract changed/)
+  assert.equal(output.replace('export const StatusbarItemView', 'const StatusbarItemView'), source)
+})
+
 test('startup recovery retries a module-load failure once and never loops with blocked storage', () => {
   const store = new Map(); let reloads = 0
   const sessionStorage = { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) }

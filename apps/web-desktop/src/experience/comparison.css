@@ -39,6 +39,24 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
 .browser-main { position:relative; flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; outline:none; overflow:hidden; }
 .browser-chat { flex:1; min-height:0; display:flex; flex-direction:column; position:relative; }
 .browser-status { flex-shrink:0; border-top:1px solid var(--border); }
+.browser-statusbar { display:flex; align-items:center; gap:.5rem; padding:.45rem .8rem; background:var(--background); }
+.browser-status-controls { display:flex; flex-wrap:wrap; gap:.3rem; flex:1; min-width:0; height:auto; padding:0; background:none; }
+
+.browser-status-controls :is(button,a) { min-height:2rem; height:auto; padding:.35rem .6rem; border-radius:.5rem; border:1px solid var(--border); font-size:.75rem; gap:.4rem; }
+.browser-status-controls .truncate { white-space:normal; overflow:visible; }
+.browser-status-details { display:flex; align-items:center; gap:.45rem; flex-shrink:0; min-height:2rem; padding:.35rem .6rem; border-radius:.5rem; font-size:.75rem; color:var(--muted-foreground); cursor:pointer; }
+.browser-status-details:hover,.browser-status-details[data-state="open"] { color:var(--foreground); background:var(--accent); }
+.browser-update-dot { width:.4rem; height:.4rem; border-radius:50%; background:var(--primary); }
+.browser-status-popover { width:22rem; max-width:calc(100vw / var(--web-ui-scale, 1) - 1rem); max-height:calc(70vh / var(--web-ui-scale, 1)); overflow:auto; padding:1rem; }
+.browser-status-popover h2 { font-size:.9rem; font-weight:600; }
+.browser-status-popover > p { font-size:.72rem; color:var(--muted-foreground); margin:.25rem 0 .75rem; }
+.browser-status-section + .browser-status-section { margin-top:.65rem; padding-top:.65rem; border-top:1px solid var(--border); }
+.browser-status-section h3 { font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-foreground); margin:0 .5rem .3rem; }
+.browser-status-detail-controls { display:flex; flex-direction:column; align-items:stretch; gap:.25rem; }
+.browser-status-detail-controls > div { padding:.4rem .5rem; font-size:.75rem; }
+
+.browser-status-detail-controls :is(button,a) { width:100%; min-height:2.25rem; height:auto; justify-content:flex-start; gap:.6rem; border-radius:.45rem; padding:.5rem; font-size:.75rem; text-align:left; }
+.browser-status-detail-controls .truncate { white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
 .browser-tools { height:100%; overflow:auto; padding:.75rem; }
 .browser-tools p { color:var(--muted-foreground); text-transform:uppercase; font-size:.62rem; font-weight:600; letter-spacing:.08em; margin:1rem .6rem .4rem; }
 .browser-tools button { width:100%; display:block; text-align:left; padding:.55rem .65rem; border-radius:.5rem; font-size:.8rem; text-transform:capitalize; cursor:pointer; }
@@ -68,7 +86,8 @@ html[data-experience="desktop"] #root { display:flex; flex-direction:column; ove
  .browser-scrim { display:block; position:absolute; inset:0; background:#0006; z-index:60; }
  .desktop-comparison-bar { padding:.5rem .75rem; }
  .desktop-comparison-bar small { display:none; }
- .browser-status { overflow-x:auto; }
+ .browser-statusbar { padding:.35rem .45rem; gap:.25rem; }
+ .browser-status-controls :is(button,a) { font-size:.7rem; padding:.3rem .4rem; }
 }
 @media (prefers-reduced-motion:reduce) { .browser-navigation { transition:none; } }
 .browser-upstream-workspace { position:relative; display:flex; flex:1; min-height:0; min-width:0; }

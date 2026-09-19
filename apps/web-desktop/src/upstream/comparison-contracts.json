@@ -54,5 +54,13 @@
   {
     "module": "components/ui/pane-tab.tsx",
     "sourceHash": "56dc477e624c5419f681b2a444acd98292896bd1eea00d58115efc4d538a8643"
+  },
+  {
+    "module": "app/shell/statusbar-controls.tsx",
+    "sourceHash": "67e0dbb288eb88458d790f76d88b50d0a384b57b8e39bf5c5bf2b7c08fbea9fa"
+  },
+  {
+    "module": "app/shell/hooks/use-statusbar-items.tsx",
+    "sourceHash": "787e6245a034cf9afc99f9d2cff435edaf71937d3a4179c229c1c1536e15fb07"
   }
 ]

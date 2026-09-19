@@ -45,6 +45,25 @@ export function filterBrowserNarrowNavigation(source: string): string {
   if (source !== original && source !== output) throw new Error('Comparison narrow tool overlay was partially modified')
   return output
 }
+export function closeBrowserWorkspacePanels(source: string): string {
+  // Without a selected project the visibility binding already reads false,
+  // so calling the owner's closer cannot emit another false notification.
+  // Explicit browser Close must also hide a manually revealed empty panel.
+  const before = 'export function closeTreePane(paneId: string) {\n  const closer = paneClosers[paneId]\n\n  if (closer) {\n    closer()'
+  const after = before + "\n    if (document.documentElement.dataset.experience === 'browser' && ['files', 'review'].includes(paneId)) setTreePaneHidden(paneId, true)"
+  const original = source.replace(after, before)
+  const contract = contracts.find(item => item.module === 'components/pane-shell/tree/store.ts')!
+  if (createHash('sha256').update(original).digest('hex') !== contract.sourceHash || original.split(before).length !== 2) throw new Error('Comparison empty-panel close contract changed')
+  return original.replace(before, after)
+}
+export function exportBrowserStatusbarItem(source: string): string {
+  const before = 'const StatusbarItemView = memo(function StatusbarItemView('
+  const after = 'export ' + before
+  const original = source.replace(after, before)
+  const contract = contracts.find(item => item.module === 'app/shell/statusbar-controls.tsx')!
+  if (createHash('sha256').update(original).digest('hex') !== contract.sourceHash || original.split(before).length !== 2) throw new Error('Comparison statusbar item contract changed')
+  return original.replace(before, after)
+}
 export function comparisonPlugin(root: string): Plugin {
   const sourceRoot = path.resolve(root, '../desktop/src')
   return {
@@ -56,15 +75,19 @@ export function comparisonPlugin(root: string): Plugin {
       }
     },
     async resolveId(source, importer) {
-      if (importer?.replaceAll('\\', '/').endsWith('/upstream/comparison-titlebar.tsx')) return null
-      if (!/(?:^|\/)(?:app(?:\/index)?|titlebar-controls)(?:\.tsx)?$/.test(source)) return null
+      if (source === 'hermes:statusbar-item') return path.join(sourceRoot, 'app/shell/statusbar-controls.tsx')
+      if (/\/upstream\/comparison-(?:titlebar|statusbar)\.tsx$/.test(importer?.replaceAll('\\', '/') || '')) return null
+      if (!/(?:^|\/)(?:app(?:\/index)?|titlebar-controls|statusbar-controls)(?:\.tsx)?$/.test(source)) return null
       const resolved = await this.resolve(source, importer, { skipSelf: true })
       const id = resolved?.id.replaceAll('\\', '/')
       if (id?.endsWith('/desktop/src/app/index.tsx')) return path.join(root, 'src/upstream/comparison-root.tsx')
       if (id?.endsWith('/desktop/src/app/shell/titlebar-controls.tsx')) return path.join(root, 'src/upstream/comparison-titlebar.tsx')
+      if (id?.endsWith('/desktop/src/app/shell/statusbar-controls.tsx')) return path.join(root, 'src/upstream/comparison-statusbar.tsx')
       return null
     },
     transform(code, id) {
+      if (id.replaceAll('\\', '/').endsWith('/desktop/src/app/shell/statusbar-controls.tsx')) return { code: exportBrowserStatusbarItem(code), map: null }
+      if (id.replaceAll('\\', '/').endsWith('/desktop/src/components/pane-shell/tree/store.ts')) return { code: closeBrowserWorkspacePanels(code), map: null }
       if (id.replaceAll('\\', '/').endsWith('/desktop/src/components/pane-shell/tree/renderer/narrow-overlays.tsx')) return { code: filterBrowserNarrowNavigation(code), map: null }
       if (!id.replaceAll('\\', '/').endsWith('/desktop/src/lib/storage.ts')) return null
       return { code: scopeComparisonStorage(code), map: null }

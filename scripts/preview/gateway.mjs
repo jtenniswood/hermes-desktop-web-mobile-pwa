@@ -116,6 +116,7 @@ export function createPreviewGateway({ log = () => {}, delay = 95 } = {}) {
     if (pathname === '/api/tools/terminal/backends') return send({ backends: [] })
     if (pathname === '/api/projects') return send({ projects: [], active_id: null })
     if (pathname === '/api/skills') return send({ skills: [] })
+    if (pathname === '/api/learning/graph') return send({ nodes: [], edges: [], clusters: [], memory: [], stats: {} })
     if (pathname === '/api/cron/jobs' || pathname === '/api/cron') return send({ jobs: [] })
     if (pathname.includes('plugins')) return send({ plugins: [] })
     if (pathname.includes('soul')) return send({ content: 'A helpful synthetic assistant for interface review.', exists: true })

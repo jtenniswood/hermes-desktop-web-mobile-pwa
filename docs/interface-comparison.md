@@ -18,6 +18,11 @@ Contributed panels have a close button even when opened alone. On desktop,
 their Tools entries also toggle them open or closed and highlight the active
 panel. On phones, Tools opens the panel as an overlay with its own close button.
 
+The browser footer keeps gateway health and approval mode visible. Its Details
+menu holds workspace actions, contributed status controls, and full client and
+backend version information. These controls retain the upstream menus and
+callbacks; an available version update also marks the Details button.
+
 ## Run the isolated preview
 
 The `interface-comparison-preview` workflow builds and tests the actual nginx
