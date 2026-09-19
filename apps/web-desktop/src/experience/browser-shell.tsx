@@ -5,24 +5,20 @@ import { Codicon, ContribWiring, WiredPane, SidebarProvider, ContribRender, Cont
 import { ExperienceSelector } from './selector'
 import { runtimeConfig } from '../platform/runtime'
 
-const TOOL_ROUTE_META: Record<string, { label: string; icon: string }> = {
-  'command-center': { label: 'Command Center', icon: 'symbol-misc' },
-  skills: { label: 'Capabilities', icon: 'symbol-misc' },
-  messaging: { label: 'Messaging', icon: 'comment' },
-  webhooks: { label: 'Webhooks', icon: 'globe' },
-  artifacts: { label: 'Artifacts', icon: 'files' },
-  cron: { label: 'Scheduled jobs', icon: 'watch' },
-  profiles: { label: 'Profiles', icon: 'account' },
-  agents: { label: 'Agents', icon: 'hubot' },
-  starmap: { label: 'Starmap', icon: 'pulse' }
-}
-
-function toolRouteLabel(id: string) {
-  return TOOL_ROUTE_META[id]?.label || id.replaceAll('-', ' ')
+const TOOL_ROUTE_ICONS: Record<string, string> = {
+  'command-center': 'symbol-misc',
+  skills: 'symbol-misc',
+  messaging: 'comment',
+  webhooks: 'globe',
+  artifacts: 'files',
+  cron: 'watch',
+  profiles: 'account',
+  agents: 'hubot',
+  starmap: 'pulse'
 }
 
 function toolRouteIcon(id: string) {
-  return TOOL_ROUTE_META[id]?.icon || 'folder'
+  return TOOL_ROUTE_ICONS[id] || 'folder'
 }
 
 export function BrowserShell() {
@@ -93,7 +89,7 @@ function BrowserLayout() {
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
           {tab === 'tools' && <nav className="browser-tools" aria-label="Tools">
-            <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button className="browser-tool-row" key={route.path} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}><span className="browser-tool-icon"><Codicon name={toolRouteIcon(route.id)} size="1.25rem" /></span><span>{toolRouteLabel(route.id)}</span></button>)}
+            <p>Workspace</p>{APP_ROUTES.filter(route => !['new', 'settings', 'session-import'].includes(route.id)).map(route => <button className="browser-tool-row" key={route.path} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}><span className="browser-tool-icon"><Codicon name={toolRouteIcon(route.id)} size="1.25rem" /></span><span>{route.id.replaceAll('-', ' ')}</span></button>)}
             {!!routes.length && <p>Extensions</p>}{routes.map(route => <button className="browser-tool-row" key={route.key} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}><span className="browser-tool-icon"><Codicon name="folder" size="1.25rem" /></span><span>{route.path.slice(1)}</span></button>)}
             <p>Contributed panels</p>{panes.filter(pane => !['workspace', 'sessions', 'hermes-bots:pane', 'terminal'].includes(pane.id)).map(pane => <BrowserPanelButton key={pane.id} id={pane.id} title={String(pane.title || pane.id)} icon={<Codicon name="files" size="1.25rem" />} collapsible={Boolean((pane.data as { collapsible?: boolean } | undefined)?.collapsible)} onOpen={() => { setDrawerOpen(false); main.current?.focus() }} />)}
           </nav>}
