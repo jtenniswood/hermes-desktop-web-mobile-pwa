@@ -51,9 +51,10 @@ function BrowserLayout() {
   const workspacePane = tree && findGroupOfPane(tree, 'workspace')?.active
   const panes = useContributions('panes')
   const routes = contributedRoutes(useContributions(ROUTES_AREA))
-  const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null)
+  const main = useRef<HTMLElement>(null), menu = useRef<HTMLButtonElement>(null), drawer = useRef<HTMLElement>(null), profileActions = useRef<HTMLDivElement>(null), profileActionsButton = useRef<HTMLButtonElement>(null)
   const requestedProfile = useRef<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [profileActionsOpen, setProfileActionsOpen] = useState(false)
   const [createProfileOpen, setCreateProfileOpen] = useState(false)
   const [tab, setTab] = useState<'sessions' | 'bots' | 'tools'>(() => {
     try { const saved = localStorage.getItem('hermes-web.browser.navigation'); return saved === 'bots' || saved === 'tools' ? saved : 'sessions' } catch { return 'sessions' }
@@ -72,6 +73,7 @@ function BrowserLayout() {
     previous.current = { selected, bot, path: location.pathname }
   }, [selected, bot, location.pathname])
   useEffect(() => { try { localStorage.setItem('hermes-web.browser.navigation', tab) } catch { /* Optional preference. */ } }, [tab])
+  useEffect(() => { if (tab !== 'sessions') setProfileActionsOpen(false) }, [tab])
   useEffect(() => {
     // A Bot activation can finish after a profile pick and restore the
     // upstream all-profiles flag. Keep an explicit browser selection in force.
@@ -91,22 +93,19 @@ function BrowserLayout() {
     document.addEventListener('keydown', keydown)
     return () => document.removeEventListener('keydown', keydown)
   }, [drawerOpen])
+  useEffect(() => {
+    if (!profileActionsOpen) return
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!profileActions.current?.contains(event.target as Node)) setProfileActionsOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    requestAnimationFrame(() => profileActions.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus())
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer)
+  }, [profileActionsOpen])
   const surface = (pane: typeof bots) => pane?.render ? <ContribBoundary id={pane.id}><ContribRender render={pane.render} /></ContribBoundary> : null
   const openRoute = (path: string) => { navigateToWorkspacePage(navigate, path); setDrawerOpen(false) }
   const profileValue = showAllProfiles ? ALL_PROFILES : profile
   const chooseProfile = (value: string) => {
-    if (value === PROFILE_ACTIONS.new) {
-      setCreateProfileOpen(true)
-      return
-    }
-    if (value === PROFILE_ACTIONS.import) {
-      void runImportProfileFlow()
-      return
-    }
-    if (value === PROFILE_ACTIONS.manage) {
-      openRoute('/profiles')
-      return
-    }
     if (value === ALL_PROFILES) {
       requestedProfile.current = null
       // The session-list adapter uses this marker to route concrete profile
@@ -118,6 +117,12 @@ function BrowserLayout() {
     }
     requestedProfile.current = value
     selectProfile(value)
+  }
+  const profileAction = (action: typeof PROFILE_ACTIONS[keyof typeof PROFILE_ACTIONS]) => {
+    setProfileActionsOpen(false)
+    if (action === PROFILE_ACTIONS.new) setCreateProfileOpen(true)
+    if (action === PROFILE_ACTIONS.import) void runImportProfileFlow()
+    if (action === PROFILE_ACTIONS.manage) openRoute('/profiles')
   }
   return <div className="browser-shell" data-browser-shell="">
     <header className="browser-header">
@@ -134,7 +139,6 @@ function BrowserLayout() {
             if (next) { event.preventDefault(); event.stopPropagation(); setTab(next); (event.currentTarget.parentElement?.children[values.indexOf(next)] as HTMLElement)?.focus() }
           }} onClick={() => setTab(value)}>{value === 'sessions' ? 'Sessions' : value === 'bots' ? 'Bots' : 'Tools'}</button>)}
         </div>
-        {tab === 'sessions' && <label className="browser-profile">Profile<select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{sentenceCase(profile)}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{sentenceCase(item.display_name || item.name)}</option>)}<optgroup label="Profile actions"><option value={PROFILE_ACTIONS.new}>New profile</option><option value={PROFILE_ACTIONS.import}>Import profile</option><option value={PROFILE_ACTIONS.manage}>Manage profiles</option></optgroup></select></label>}
         <div className="browser-navigation-body" role="tabpanel" aria-label={tab}>
           <div hidden={tab !== 'sessions'} className="browser-pane"><WiredPane part="sidebar" /></div>
           <div hidden={tab !== 'bots'} className="browser-pane">{surface(bots) || <p className="browser-empty">Loading Bots…</p>}</div>
@@ -145,6 +149,17 @@ function BrowserLayout() {
             {!!routes.length && <p>Extensions</p>}{routes.map(route => <button className="browser-tool-row" key={route.key} aria-current={location.pathname === route.path ? 'page' : undefined} onClick={() => openRoute(route.path)}><span className="browser-tool-icon"><Codicon name="folder" size="1rem" /></span><span>{sentenceCase(route.path.slice(1))}</span></button>)}
           </nav>}
         </div>
+        {tab === 'sessions' && <div className="browser-profile-footer">
+          <select aria-label="Profile" value={profileValue} onChange={event => chooseProfile(event.target.value)}>{profiles.length > 1 && <option value={ALL_PROFILES}>All</option>}{!showAllProfiles && !profiles.some(item => item.name === profile) && <option value={profile}>{sentenceCase(profile)}</option>}{profiles.map(item => <option key={item.name} value={item.name}>{sentenceCase(item.display_name || item.name)}</option>)}</select>
+          <div className="browser-profile-actions" ref={profileActions} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setProfileActionsOpen(false); profileActionsButton.current?.focus() } }}>
+            <button className="browser-profile-actions-trigger" ref={profileActionsButton} type="button" aria-label="Profile actions" aria-haspopup="menu" aria-expanded={profileActionsOpen} onClick={() => setProfileActionsOpen(open => !open)}>…</button>
+            {profileActionsOpen && <div className="browser-profile-actions-menu" role="menu" aria-label="Profile actions">
+              <button type="button" role="menuitem" onClick={() => profileAction(PROFILE_ACTIONS.new)}>New profile</button>
+              <button type="button" role="menuitem" onClick={() => profileAction(PROFILE_ACTIONS.import)}>Import profile</button>
+              <button type="button" role="menuitem" onClick={() => profileAction(PROFILE_ACTIONS.manage)}>Manage profiles</button>
+            </div>}
+          </div>
+        </div>}
       </aside>
       <main className="browser-main" ref={main} tabIndex={-1} aria-label="Conversation and workspace">
         <BrowserWorkspace />
