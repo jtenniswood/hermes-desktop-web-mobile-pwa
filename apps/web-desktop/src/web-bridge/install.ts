@@ -10,14 +10,15 @@
  */
 import { createWebBridge } from './bridge'
 
-// The desktop renderer supplies its own contextual menus. Without this guard,
-// the browser also opens its native page menu for the same right-click, which
-// leaves two menus visible at once in the web wrapper. Capture the event so
-// the guard runs before renderer handlers, but do not stop propagation: the
-// renderer still needs the event to open its custom menu.
+// The browser shell does not have the desktop renderer's contextual-menu
+// handlers, so suppress the browser page menu there. Leave desktop events
+// untouched: its profile bar, status bar, and layout controls own the
+// context-menu event and need to receive it before the default is cancelled.
 if (typeof window !== 'undefined') {
   window.addEventListener('contextmenu', event => {
-    event.preventDefault()
+    if (document.documentElement.dataset.experience !== 'desktop') {
+      event.preventDefault()
+    }
   }, true)
 }
 
